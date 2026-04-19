@@ -15,8 +15,6 @@ import {
  */
 const TOKEN_ERROR_CODES: ReadonlySet<string> = new Set([
   'invalidtoken',
-  'invalidparameter', // sometimes thrown when token malformed
-  'accessexception',
   'wsaccessuserdeleted',
   'wsaccessusersuspended',
   'wsaccessusercannotlogin',

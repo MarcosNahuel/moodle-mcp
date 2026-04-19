@@ -197,8 +197,7 @@ Despedida.
           ],
         },
       ],
-      core_course_edit_section: editCalls,
-      core_course_edit_module: editCalls,
+      local_wsmanagesections_update_sections: editCalls,
     });
     const res = await publicarFichaClaseTool.handler(
       { ficha_path: fichaPath, course_id: 42, modo: 'oculto' },
@@ -223,7 +222,7 @@ Despedida.
         { id: 300, name: 'Target', section: 3, visible: 1, modules: [] },
         { id: 301, name: 'Other', section: 4, visible: 1, modules: [] },
       ],
-      core_course_edit_section: async () => null,
+      local_wsmanagesections_update_sections: async () => null,
     });
     const res = await publicarFichaClaseTool.handler(
       { ficha_path: fichaPath, course_id: 42, section_id: 300, modo: 'visible' },
@@ -274,7 +273,7 @@ content
         core_course_get_contents: () => [
           { id: 400, name: 'Home', section: 0, visible: 1, modules: [] },
         ],
-        core_course_edit_section: async () => null,
+        local_wsmanagesections_update_sections: async () => null,
       },
       'https://aula.italicia.com',
     );
@@ -293,16 +292,16 @@ content
 // ---------- confirmar_preview ----------
 
 describe('confirmarPreviewTool', () => {
-  it('shows the section and no modules when recursos_ids is omitted', async () => {
+  it('updates the section visibility via local_wsmanagesections', async () => {
     const calls: Array<{ fn: string; params: Record<string, unknown> }> = [];
     const client = scriptedClient({
-      core_course_edit_section: (params) => {
-        calls.push({ fn: 'core_course_edit_section', params });
+      local_wsmanagesections_update_sections: (params) => {
+        calls.push({ fn: 'local_wsmanagesections_update_sections', params });
         return null;
       },
     });
     const res = await confirmarPreviewTool.handler(
-      { seccion_id: 500 },
+      { seccion_id: 500, course_id: 42 },
       ctx(client),
     );
     expect(res.isError).toBeFalsy();
@@ -310,33 +309,34 @@ describe('confirmarPreviewTool', () => {
     expect(data.seccion).toEqual({ id: 500, ahora_visible: true });
     expect(data.recursos_liberados).toBe(0);
     expect(calls).toHaveLength(1);
+    expect(calls[0]!.params).toMatchObject({
+      courseid: 42,
+      sections: [{ sectionid: 500, visible: 1 }],
+      updatemodules: 1,
+    });
   });
 
-  it('shows the section and each requested module', async () => {
-    const calls: string[] = [];
+  it('ignores recursos_ids with an advertencia but still propagates visibility', async () => {
     const client = scriptedClient({
-      core_course_edit_section: () => {
-        calls.push('section');
-        return null;
-      },
-      core_course_edit_module: () => {
-        calls.push('module');
-        return null;
-      },
+      local_wsmanagesections_update_sections: () => null,
     });
     const res = await confirmarPreviewTool.handler(
-      { seccion_id: 500, recursos_ids: [1, 2, 3] },
+      { seccion_id: 500, course_id: 42, recursos_ids: [1, 2, 3] },
       ctx(client),
     );
     expect(res.isError).toBeFalsy();
     const data = JSON.parse(res.content[0]!.text);
     expect(data.recursos_liberados).toBe(3);
-    expect(calls).toEqual(['section', 'module', 'module', 'module']);
+    expect(data.advertencias).toHaveLength(1);
+    expect(data.advertencias[0]).toMatch(/section level/i);
   });
 
   it('rejects invalid input', () => {
     expect(() =>
-      confirmarPreviewTool.inputSchema.parse({ seccion_id: 0 }),
+      confirmarPreviewTool.inputSchema.parse({ seccion_id: 0, course_id: 1 }),
+    ).toThrow();
+    expect(() =>
+      confirmarPreviewTool.inputSchema.parse({ seccion_id: 1 }),
     ).toThrow();
   });
 });

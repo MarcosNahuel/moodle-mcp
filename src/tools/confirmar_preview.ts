@@ -8,6 +8,7 @@ import {
 const InputSchema = z
   .object({
     seccion_id: z.number().int().positive(),
+    course_id: z.number().int().positive(),
     recursos_ids: z.array(z.number().int().positive()).optional(),
   })
   .strict();
@@ -15,38 +16,43 @@ const InputSchema = z
 export type ConfirmarPreviewInput = z.infer<typeof InputSchema>;
 
 /**
- * Make a previously hidden section — and optionally a specific subset of
- * its modules — visible to students. This is the second step of the
- * preview workflow (after `publicar_preview`).
+ * Make a previously hidden section — and its modules by default —
+ * visible to students. Second step of the preview workflow (after
+ * `publicar_preview`).
  *
- * If `recursos_ids` is omitted, all modules in the section are made visible.
+ * Uses `local_wsmanagesections_update_sections` (plugin) with
+ * `updatemodules: true` so the section's children inherit the new
+ * visibility in a single WS call. `recursos_ids` is accepted for
+ * API compatibility but in v0.1.1 is ignored — section-level visibility
+ * already governs all its modules.
  */
 export const confirmarPreviewTool: ToolDefinition<ConfirmarPreviewInput> = {
   name: 'confirmar_preview',
   description:
-    'Make a previewed section (and optionally a subset of its modules) visible to students. Idempotent.',
+    'Make a previewed section visible to students. Propagates visibility to all modules inside the section. Idempotent.',
   inputSchema: InputSchema,
   async handler(args, ctx) {
     try {
-      await ctx.client.call('core_course_edit_section', {
-        action: 'show',
-        id: args.seccion_id,
+      await ctx.client.call('local_wsmanagesections_update_sections', {
+        courseid: args.course_id,
+        sections: [
+          {
+            sectionid: args.seccion_id,
+            visible: 1,
+          },
+        ],
+        updatemodules: 1,
       });
-
-      let recursos_liberados = 0;
-      if (args.recursos_ids !== undefined) {
-        for (const id of args.recursos_ids) {
-          await ctx.client.call('core_course_edit_module', {
-            action: 'show',
-            id,
-          });
-          recursos_liberados += 1;
-        }
-      }
 
       return toJsonResponse({
         seccion: { id: args.seccion_id, ahora_visible: true },
-        recursos_liberados,
+        recursos_liberados: args.recursos_ids?.length ?? 0,
+        advertencias:
+          args.recursos_ids !== undefined
+            ? [
+                'recursos_ids is ignored in v0.1: visibility is applied at section level via local_wsmanagesections (propagates to all modules inside).',
+              ]
+            : [],
       });
     } catch (e) {
       return toErrorResponse(e);

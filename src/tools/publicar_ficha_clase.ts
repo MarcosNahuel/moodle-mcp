@@ -189,11 +189,10 @@ async function executePlan(
       continue;
     }
 
-    // Update visibility in place. Idempotent — Moodle ignores a no-op.
-    await ctx.client.call('core_course_edit_module', {
-      action: op.visible ? 'show' : 'hide',
-      id: existing.id,
-    });
+    // v0.1.1: Moodle 5.x core does not expose `core_course_edit_module`
+    // via WS. Module visibility is now managed at section level by the
+    // `local_wsmanagesections_update_sections` call below (with
+    // `updatemodules: 1`). Here we just record the module was found.
 
     recursos.push({
       component_id: op.component_id,
@@ -260,7 +259,7 @@ async function ensureSection(
         },
       );
     }
-    await setSectionVisibility(ctx, target.id, plan.section.visible);
+    await setSectionVisibility(ctx, target.id, exec.courseId, plan.section.visible);
     return {
       section: sectionDescriptor(target, plan.section.idnumber),
       status: 'updated',
@@ -282,7 +281,7 @@ async function ensureSection(
     ),
   );
   if (existing) {
-    await setSectionVisibility(ctx, existing.id, plan.section.visible);
+    await setSectionVisibility(ctx, existing.id, exec.courseId, plan.section.visible);
     return {
       section: sectionDescriptor(existing, plan.section.idnumber),
       status: 'updated',
@@ -311,7 +310,7 @@ async function ensureSection(
       },
     );
   }
-  await setSectionVisibility(ctx, fallback.id, plan.section.visible);
+  await setSectionVisibility(ctx, fallback.id, exec.courseId, plan.section.visible);
   return {
     section: sectionDescriptor(fallback, plan.section.idnumber),
     status: 'created',
@@ -321,19 +320,28 @@ async function ensureSection(
 async function setSectionVisibility(
   ctx: ToolContext,
   sectionId: number,
+  courseId: number,
   visible: boolean,
 ): Promise<void> {
   try {
-    await ctx.client.call('core_course_edit_section', {
-      action: visible ? 'show' : 'hide',
-      id: sectionId,
+    await ctx.client.call('local_wsmanagesections_update_sections', {
+      courseid: courseId,
+      sections: [
+        {
+          sectionid: sectionId,
+          visible: visible ? 1 : 0,
+        },
+      ],
+      updatemodules: 1,
     });
   } catch (e) {
-    ctx.logger.warn('edit_section.failed', {
+    ctx.logger.warn('update_section.failed', {
       section_id: sectionId,
+      course_id: courseId,
       error: (e as Error).message,
     });
-    // Non-fatal — sections created by the user may already be visible.
+    // Non-fatal — sections may already be in the desired state, or the
+    // plugin may not be installed. The publish flow carries on.
   }
 }
 
