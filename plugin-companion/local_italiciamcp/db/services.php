@@ -18,8 +18,20 @@ $functions = [
         'capabilities' => 'moodle/course:manageactivities',
         'ajax'         => true,
     ],
+    'local_italiciamcp_update_course_summary' => [
+        'classname'    => 'local_italiciamcp\\external\\update_course_summary',
+        'methodname'   => 'execute',
+        'description'  => 'Update the summary (description) of a course',
+        'type'         => 'write',
+        'capabilities' => 'moodle/course:update',
+        'ajax'         => true,
+    ],
+    'local_italiciamcp_upsert_quiz' => [
+        'classname'    => 'local_italiciamcp\\external\\upsert_quiz',
+        'methodname'   => 'execute',
+        'description'  => 'Create or update a mod_quiz shell (no questions), keyed by idnumber',
+        'type'         => 'write',
+        'capabilities' => 'moodle/course:manageactivities',
+        'ajax'         => true,
+    ],
 ];
-
-// We intentionally do not register a pre-built external service here.
-// The admin adds these functions to the existing `moodle-mcp` service
-// manually (same flow as with `local_wsmanagesections`).
