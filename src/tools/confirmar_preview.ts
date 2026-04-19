@@ -37,11 +37,11 @@ export const confirmarPreviewTool: ToolDefinition<ConfirmarPreviewInput> = {
         courseid: args.course_id,
         sections: [
           {
-            sectionid: args.seccion_id,
+            type: 'id',
+            section: args.seccion_id,
             visible: 1,
           },
         ],
-        updatemodules: 1,
       });
 
       return toJsonResponse({

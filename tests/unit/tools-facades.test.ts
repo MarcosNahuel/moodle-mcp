@@ -311,8 +311,7 @@ describe('confirmarPreviewTool', () => {
     expect(calls).toHaveLength(1);
     expect(calls[0]!.params).toMatchObject({
       courseid: 42,
-      sections: [{ sectionid: 500, visible: 1 }],
-      updatemodules: 1,
+      sections: [{ type: 'id', section: 500, visible: 1 }],
     });
   });
 

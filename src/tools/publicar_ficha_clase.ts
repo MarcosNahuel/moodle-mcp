@@ -328,11 +328,11 @@ async function setSectionVisibility(
       courseid: courseId,
       sections: [
         {
-          sectionid: sectionId,
+          type: 'id',
+          section: sectionId,
           visible: visible ? 1 : 0,
         },
       ],
-      updatemodules: 1,
     });
   } catch (e) {
     ctx.logger.warn('update_section.failed', {
