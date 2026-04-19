@@ -3,7 +3,7 @@
 > Model Context Protocol (MCP) server for Moodle. Lets AI agents publish and manage pedagogical content — lessons, resources, activities — in Moodle via Web Services with guaranteed idempotency.
 
 [![CI](https://github.com/marcosnahuel/moodle-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/marcosnahuel/moodle-mcp/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/moodle-mcp.svg)](https://www.npmjs.com/package/moodle-mcp)
+[![npm](https://img.shields.io/npm/v/@marcosnahuel/moodle-mcp.svg)](https://www.npmjs.com/package/@marcosnahuel/moodle-mcp)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
 **Status:** v0.1 MVP.
@@ -32,10 +32,10 @@ Not in v0.1 (planned for v0.2+): `publicar_ficha_examen`, `sync_alumnos_csv`, HT
 
 ```bash
 # Via npx (recommended for Claude Desktop)
-npx -y moodle-mcp
+npx -y @marcosnahuel/moodle-mcp
 
 # Or install globally
-npm install -g moodle-mcp
+npm install -g @marcosnahuel/moodle-mcp
 ```
 
 Requires Node.js 20 or higher.
