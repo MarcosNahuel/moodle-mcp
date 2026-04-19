@@ -74,6 +74,25 @@ Memoria persistente entre iteraciones. La iteración N lee esto para saber qué 
 
 ---
 
+## Iteración 4 (2026-04-18)
+
+**Hecho:**
+- `npm install --omit=dev --no-audit --no-fund` → 114 paquetes, 15s.
+- Versiones resueltas (pineadas en `package-lock.json`):
+  - `@modelcontextprotocol/sdk@1.29.0` (última estable `^1.x` al 2026-04-18, cumple §2 decisión 5 de AGENT_LAUNCH).
+  - `zod@3.25.76`
+  - `marked@14.1.4`
+  - `form-data@4.0.5`
+  - `p-retry@6.2.1`
+  - `gray-matter@4.0.3`
+- Ítem 4 de Fase 0 ✅.
+
+**Próximo ítem (iteración 5):** Fase 0 → Instalar devDeps (`typescript`, `vitest`, `nock`, `@types/node`, `tsup`, `@vitest/coverage-v8`). Corriendo `npm install` sin flag agrega las devDeps (ya declaradas en `package.json`) sobre las prod ya instaladas.
+
+**Decisión menor:** uso `--omit=dev` en iter 4 y `npm install` limpio en iter 5 para respetar literalmente "un ítem por iteración". Posible que npm quiera reinstalar árbol entero en iter 5 (ruido en `package-lock.json`); si genera diff no-significativo, lo acepto como parte del commit de devDeps.
+
+---
+
 ## Blockers
 
 (Ninguno por ahora.)
