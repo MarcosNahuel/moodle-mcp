@@ -333,6 +333,26 @@ Memoria persistente entre iteraciones. La iteración N lee esto para saber qué 
 
 ---
 
+## Iteración 16 (2026-04-18)
+
+**Hecho:**
+- Creado `src/schemas/moodle-responses.ts`:
+  - `moodleBool` — coerce 0|1|boolean → boolean.
+  - `SiteInfoResponseSchema` para `core_webservice_get_site_info` (sitename, userid, functions[], version, release).
+  - `CourseSchema` + `CoursesByFieldResponseSchema` para `core_course_get_courses_by_field`.
+  - `SectionSchema` + `ModuleSchema` + `CourseContentsResponseSchema` (array de sections) para `core_course_get_contents`.
+  - `EnrolledUserRoleSchema` + `EnrolledUserSchema` + `EnrolledUsersResponseSchema` para `core_enrol_get_enrolled_users`.
+  - `FileUploadResponseSchema` para `core_files_upload` (itemid, filename, …).
+  - Todos con `.passthrough()` para ser robustos a drift de versión Moodle.
+  - Export `TEACHER_ROLE_SHORTNAMES` set para contar docentes vs alumnos.
+- `tests/unit/moodle-responses.test.ts` — 13 tests: moodleBool (4), site info realista con extra field, site defaults, courses con visible mixto, course rejection, sections con modules anidados, sections default empty, enrolled users con roles, file upload mínimo, file upload sin itemid.
+- tsc --noEmit limpio. **Total: 133/133 tests verde**.
+- Ítem 2 de Fase 2 ✅.
+
+**Próximo ítem (iteración 17):** Fase 2 → `src/adapters/ficha-to-moodle.ts` — función que dado `FichaClase` devuelve lista de operaciones planificadas (sin ejecutar). Facilita testear lógica de mapeo aislada de la API.
+
+---
+
 ## Blockers
 
 (Ninguno por ahora.)
