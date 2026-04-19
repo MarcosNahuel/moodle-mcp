@@ -28,9 +28,9 @@ Copiado de §5 de `D:/Proyectos/italicia_whatsapp/docs/mcp-moodle/AGENT_LAUNCH.m
 ## Fase 2 — Schemas
 - [x] `src/schemas/ficha-clase.ts` — zod schema completo según §7.1 del CONTEXT. Exportar tipo `FichaClase`.
 - [x] `src/schemas/moodle-responses.ts` — schemas de respuestas usadas (`core_course_get_courses_by_field`, `core_course_get_contents`, etc.).
-- [ ] `src/adapters/ficha-to-moodle.ts` — función que dado un `FichaClase`, devuelve una lista de operaciones planificadas (sin ejecutar). Facilita testear la lógica de mapeo aislada de la API.
-- [ ] Tests unit de schemas (rechazo de inputs inválidos, aceptación de ejemplos válidos).
-- [ ] Commit: `feat: FichaClase schema and ficha-to-moodle adapter`
+- [x] `src/adapters/ficha-to-moodle.ts` — función que dado un `FichaClase`, devuelve una lista de operaciones planificadas (sin ejecutar). Facilita testear la lógica de mapeo aislada de la API.
+- [x] Tests unit de schemas (rechazo de inputs inválidos, aceptación de ejemplos válidos).
+- [x] Commit: `feat: FichaClase schema and ficha-to-moodle adapter`
 
 ## Fase 3 — Tools (primitive + facades v0.1)
 - [ ] `src/tools/ws_raw.ts` — primitive que expone `ws_raw(function_name, params)`.

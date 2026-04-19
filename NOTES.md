@@ -353,6 +353,36 @@ Memoria persistente entre iteraciones. La iteración N lee esto para saber qué 
 
 ---
 
+## Iteración 17 (2026-04-18) — Fase 2 cerrada
+
+**Hecho:**
+- Creado `src/adapters/ficha-to-moodle.ts` — planner side-effect-free.
+  - `planFichaClase({ ficha, visible, componentContent? })` devuelve `Plan { section, operations[] }`.
+  - `section: { idnumber (stable), name: "Clase {orden} — {programa} u{unidad}", summary, preferred_section_id, visible }`.
+  - `operations[]` en orden de ejecución:
+    1. `upload_asset` para cada asset referenciado por al menos un componente (unused assets se omiten). Orden: declaration order de `assets_generados`.
+    2. `upsert_*` por componente en orden de declaración.
+  - Mapping tipo → op:
+    - `tarea_asincronica` / `tarea_asincrónica` → `upsert_assignment`.
+    - `url` → `upsert_url` (lee `metadata.url`).
+    - todo lo demás → `upsert_page`.
+  - `name`: `metadata.title` trimmed, fallback a `componente.id`.
+  - `content_markdown` / `description_markdown`: del map `componentContent[id]`, default `''`.
+  - `asset_refs[]` en páginas: single-element array con el asset ref, empty si no hay.
+- `tests/unit/ficha-to-moodle.test.ts` — 18 tests cubriendo: section idnumber estable, section name format, preferred_section_id propagation, visible false, unused assets omitidos, dedupe assets compartidos, uploads antes de upserts, orden declaration, mapping a page/assignment/url (ambas tildes), metadata.title override, fallback id, idnumber estable por componente, visible propagation a todos, componentContent fill, default empty content, asset_refs, declaration order preservation.
+- Ítems 2.3 + 2.4 (tests schemas) + commit simbólico 2.5 ✅.
+- **Fase 2 completa.** 🎉
+- tsc --noEmit limpio. **Total: 151/151 tests verde**.
+
+**Estado del repo al cerrar Fase 2:**
+- `src/config.ts`, `src/client/{errors,moodle-client}.ts`, `src/utils/{rate-limit,idempotency,markdown-to-html,logger}.ts`, `src/schemas/{ficha-clase,moodle-responses}.ts`, `src/adapters/ficha-to-moodle.ts`.
+- 10 test files con 151 casos.
+- Siguiente: Fase 3 (tools MCP) — es la parte más grande del trabajo remanente.
+
+**Próximo ítem (iteración 18):** Fase 3 arranca → `src/tools/ws_raw.ts` — primitive que expone `ws_raw(function_name, params)` al servidor MCP. Simple wrapper sobre `MoodleClient.call()` con shape de respuesta MCP.
+
+---
+
 ## Blockers
 
 (Ninguno por ahora.)
