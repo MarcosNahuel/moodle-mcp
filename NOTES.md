@@ -50,7 +50,7 @@ Memoria persistente entre iteraciones. La iteración N lee esto para saber qué 
 
 **Próximo ítem (iteración 3):** Fase 0 → `tsconfig.json` target ES2022, module NodeNext, strict true, declaration true.
 
-**Decisión menor:** el repo GitHub URL es `github.com/italicia/moodle-mcp` como placeholder. Si el org/name final difiere (ej. scope `@italicia/moodle-mcp` por conflicto npm), se actualiza en Fase 7. Anotado aquí para recordar.
+**Decisión menor:** el repo GitHub URL es `github.com/marcosnahuel/moodle-mcp` como placeholder. Si el org/name final difiere (ej. scope `@marcosnahuel/moodle-mcp` por conflicto npm), se actualiza en Fase 7. Anotado aquí para recordar.
 
 ---
 

@@ -4,7 +4,7 @@ Thanks for considering a contribution. This document is short on purpose — the
 
 ## Before you open an issue
 
-- Check the [issue tracker](https://github.com/italicia/moodle-mcp/issues) for duplicates.
+- Check the [issue tracker](https://github.com/marcosnahuel/moodle-mcp/issues) for duplicates.
 - Reproductions are gold. A failing test in `tests/unit/` or a minimal Moodle setup is the best possible bug report.
 
 ## Running the test suite

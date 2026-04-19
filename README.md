@@ -2,7 +2,7 @@
 
 > Model Context Protocol (MCP) server for Moodle. Lets AI agents publish and manage pedagogical content — lessons, resources, activities — in Moodle via Web Services with guaranteed idempotency.
 
-[![CI](https://github.com/italicia/moodle-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/italicia/moodle-mcp/actions/workflows/ci.yml)
+[![CI](https://github.com/marcosnahuel/moodle-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/marcosnahuel/moodle-mcp/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/moodle-mcp.svg)](https://www.npmjs.com/package/moodle-mcp)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
@@ -165,7 +165,7 @@ Both gaps are driven out by the integration suite in `tests/integration/` when r
 ## Development
 
 ```bash
-git clone https://github.com/italicia/moodle-mcp
+git clone https://github.com/marcosnahuel/moodle-mcp
 cd moodle-mcp
 npm install
 
