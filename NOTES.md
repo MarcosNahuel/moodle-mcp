@@ -383,6 +383,27 @@ Memoria persistente entre iteraciones. La iteración N lee esto para saber qué 
 
 ---
 
+## Iteración 18 (2026-04-18) — Fase 3 arranca
+
+**Hecho:**
+- Creado `src/tools/types.ts`:
+  - `ToolContext { client, logger }`.
+  - `ToolDefinition<TInput>` con `name`, `description`, `inputSchema: ZodType`, `handler`.
+  - `ToolResponse { content[], isError?, meta? }` — shape MCP.
+  - `toErrorResponse(e)` uniformiza errores: `MoodleWsError` → `isError + meta` con `toClientPayload()` spread; resto → `MOODLE_WS_ERROR` genérico con message.
+  - `toJsonResponse(data)` — shortcut.
+- Creado `src/tools/ws_raw.ts`:
+  - Input: `function_name` (regex `/^[a-z][a-z0-9_]*$/i`) + `params` (record, default `{}`), schema strict.
+  - Handler: log debug, `client.call()`, success → `{ data }` en JSON text content; error → `toErrorResponse`.
+- `tests/unit/ws_raw.test.ts` — 11 tests: metadata, input acepta minimal/params, rechaza missing/invalid chars/extra keys, happy path passes args, data wrap, MoodleTokenError → meta code, generic MoodleWsError → meta, unexpected TypeError → MOODLE_WS_ERROR wrap.
+- Fix: `meta: e.toClientPayload()` no compatible con `Record<string, unknown>` por falta de index signature; resolved con spread `{ ...e.toClientPayload() }`.
+- tsc --noEmit limpio. **Total: 162/162 tests verde**.
+- Ítem 1 de Fase 3 ✅.
+
+**Próximo ítem (iteración 19):** Fase 3 → `src/tools/obtener_contexto_curso.ts` — compone `core_course_get_courses_by_field` + `core_course_get_contents` + `core_enrol_get_enrolled_users`. Shape response según §5.1 CONTEXT.
+
+---
+
 ## Blockers
 
 (Ninguno por ahora.)
