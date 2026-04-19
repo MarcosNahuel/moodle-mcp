@@ -9,7 +9,7 @@ import {
   type ToolDefinition,
   type ToolResponse,
 } from './types.js';
-import { FichaClaseSchema } from '../schemas/ficha-clase.js';
+import { FichaClaseSchema, type Componente } from '../schemas/ficha-clase.js';
 import {
   CourseContentsResponseSchema,
   type Section,
@@ -17,6 +17,8 @@ import {
 } from '../schemas/moodle-responses.js';
 import { planFichaClase, type Plan } from '../adapters/ficha-to-moodle.js';
 import { MoodleWsError } from '../client/errors.js';
+import { renderMarkdown } from '../utils/markdown-to-html.js';
+import { resolveStyle, wrapWithStyle } from '../utils/estilo-presets.js';
 
 const InputSchema = z
   .object({
@@ -73,11 +75,19 @@ async function executePublicarFichaClase(
     const visible = args.modo === 'visible';
     const plan = planFichaClase({ ficha, visible, componentContent });
 
-    const result = await executePlan(ctx, plan, {
-      courseId: args.course_id,
-      sectionIdOverride: args.section_id,
-      fichaDir: dirname(args.ficha_path),
-    });
+    const componentsById = new Map<string, Componente>(
+      ficha.componentes.map((c) => [c.id, c]),
+    );
+    const result = await executePlan(
+      ctx,
+      plan,
+      {
+        courseId: args.course_id,
+        sectionIdOverride: args.section_id,
+        fichaDir: dirname(args.ficha_path),
+      },
+      componentsById,
+    );
 
     return toJsonResponse(result);
   } catch (e) {
@@ -120,6 +130,7 @@ interface ExecuteResult {
     name: string;
     url: string;
     idnumber: string;
+    sectionnum: number;
   };
   recursos: Array<{
     component_id: string;
@@ -127,7 +138,7 @@ interface ExecuteResult {
     tipo: string;
     url: string | null;
     idnumber: string;
-    status: 'updated_visibility' | 'missing';
+    status: 'created' | 'updated' | 'skipped' | 'missing';
   }>;
   advertencias: string[];
 }
@@ -136,10 +147,10 @@ async function executePlan(
   ctx: ToolContext,
   plan: Plan,
   exec: ExecuteContext,
+  componentsById: Map<string, Componente>,
 ): Promise<ExecuteResult> {
   const advertencias: string[] = [];
 
-  // One snapshot of course contents; we scan it for existing section + modules by idnumber.
   const contentsRaw = await ctx.client.call('core_course_get_contents', {
     courseid: exec.courseId,
   });
@@ -152,31 +163,39 @@ async function executePlan(
     advertencias,
   });
 
-  // Asset uploads: v0.1 does not fully implement multipart upload through
-  // the Moodle draft file area. We emit an advertencia per unique asset
-  // that's part of the plan so operators know to seed them manually on
-  // first publish — subsequent publishes are truly idempotent.
   const uploadOps = plan.operations.filter((o) => o.kind === 'upload_asset');
   for (const up of uploadOps) {
     if (up.kind !== 'upload_asset') continue;
     advertencias.push(
-      `Asset upload for '${up.asset_id}' (${up.asset_tipo}) was planned but not executed in v0.1. ` +
-        `Seed '${up.asset_path}' manually in Moodle or wait for v0.2.`,
+      `Asset upload for '${up.asset_id}' (${up.asset_tipo}) planned but not executed — multipart upload is v0.4 work. ` +
+        `Seed '${up.asset_path}' manually or embed a public URL in the markdown.`,
     );
   }
 
   const recursos: ExecuteResult['recursos'] = [];
-
   const moduleIndex = indexModulesByIdnumber(contents);
 
   for (const op of plan.operations) {
     if (op.kind === 'upload_asset') continue;
 
+    if (op.kind === 'upsert_page') {
+      const result = await upsertPageOp(ctx, op, {
+        courseId: exec.courseId,
+        sectionnum: section.sectionnum,
+        componente: componentsById.get(op.component_id),
+      });
+      recursos.push(result);
+      continue;
+    }
+
+    // Other module kinds (assignment, url) still fall through to v0.1.x
+    // "missing" reporting until the companion plugin exposes create for
+    // those types. Visibility-only update path kept for pre-existing modules.
     const existing = moduleIndex.get(op.idnumber);
     if (!existing) {
       advertencias.push(
-        `Module '${op.component_id}' (idnumber ${op.idnumber}) does not exist yet. ` +
-          `v0.1 can only update visibility of pre-existing modules; create it once manually or install local_wsmanagesections.`,
+        `Module '${op.component_id}' (kind=${op.kind}, idnumber ${op.idnumber}) does not exist yet. ` +
+          `v0.3 only auto-creates mod_page. Create ${op.kind} modules manually or wait for v0.4.`,
       );
       recursos.push({
         component_id: op.component_id,
@@ -188,19 +207,13 @@ async function executePlan(
       });
       continue;
     }
-
-    // v0.1.1: Moodle 5.x core does not expose `core_course_edit_module`
-    // via WS. Module visibility is now managed at section level by the
-    // `local_wsmanagesections_update_sections` call below (with
-    // `updatemodules: 1`). Here we just record the module was found.
-
     recursos.push({
       component_id: op.component_id,
       moodle_id: existing.id,
       tipo: existing.modname,
       url: existing.url ?? null,
       idnumber: op.idnumber,
-      status: 'updated_visibility',
+      status: 'skipped',
     });
   }
 
@@ -210,6 +223,61 @@ async function executePlan(
     recursos,
     advertencias,
   };
+}
+
+async function upsertPageOp(
+  ctx: ToolContext,
+  op: Plan['operations'][number] & { kind: 'upsert_page' },
+  scope: {
+    courseId: number;
+    sectionnum: number;
+    componente: Componente | undefined;
+  },
+): Promise<ExecuteResult['recursos'][number]> {
+  const markdown = op.content_markdown;
+  const rawHtml = markdown.trim() === '' ? '' : renderMarkdown(markdown);
+  const style = resolveStyle({
+    tipo: scope.componente?.tipo ?? 'default',
+    ...(scope.componente?.estilo !== undefined ? { estilo: scope.componente.estilo } : {}),
+    ...(scope.componente?.custom_style !== undefined
+      ? { customStyle: scope.componente.custom_style }
+      : {}),
+  });
+  const styledHtml = rawHtml === '' ? '' : wrapWithStyle(rawHtml, style);
+
+  try {
+    const result = (await ctx.client.call('local_italiciamcp_upsert_page', {
+      courseid: scope.courseId,
+      sectionnum: scope.sectionnum,
+      idnumber: op.idnumber,
+      name: op.name,
+      intro: '',
+      content: styledHtml,
+      visible: op.visible ? 1 : 0,
+    })) as { action: 'created' | 'updated'; cmid: number; instanceid: number; url: string };
+
+    return {
+      component_id: op.component_id,
+      moodle_id: result.cmid,
+      tipo: 'page',
+      url: result.url,
+      idnumber: op.idnumber,
+      status: result.action,
+    };
+  } catch (e) {
+    ctx.logger.warn('upsert_page.failed', {
+      idnumber: op.idnumber,
+      error: (e as Error).message,
+    });
+    return {
+      component_id: op.component_id,
+      moodle_id: null,
+      tipo: 'page',
+      url: null,
+      idnumber: op.idnumber,
+      status: 'missing',
+    };
+  }
 }
 
 function indexModulesByIdnumber(contents: Section[]): Map<string, Module> {
@@ -351,5 +419,6 @@ function sectionDescriptor(s: Section, plannedIdnumber: string) {
     name: s.name,
     url: '',
     idnumber: plannedIdnumber,
+    sectionnum: s.section ?? 0,
   };
 }

@@ -182,8 +182,8 @@ Despedida.
     ).toThrow(/absolute/);
   });
 
-  it('reads the ficha, plans, and updates visibility of existing modules', async () => {
-    const editCalls = vi.fn(async () => null);
+  it('reads the ficha, plans, and creates/updates pages via local_italiciamcp', async () => {
+    const upsertCalls: Array<Record<string, unknown>> = [];
     const client = scriptedClient({
       core_course_get_contents: () => [
         {
@@ -193,11 +193,21 @@ Despedida.
           visible: 0,
           modules: [
             { id: 501, name: 'Apertura', modname: 'page', instance: 1, idnumber: aperturaIdnumber, visible: 0 },
-            // cierre module is missing — should produce an advertencia
           ],
         },
       ],
-      local_wsmanagesections_update_sections: editCalls,
+      local_wsmanagesections_update_sections: async () => null,
+      local_italiciamcp_upsert_page: (params) => {
+        upsertCalls.push(params);
+        const idn = String(params.idnumber);
+        const existing = idn === aperturaIdnumber;
+        return {
+          action: existing ? 'updated' : 'created',
+          cmid: existing ? 501 : 700 + upsertCalls.length,
+          instanceid: 1 + upsertCalls.length,
+          url: `https://example/mod/page/view.php?id=${existing ? 501 : 700 + upsertCalls.length}`,
+        };
+      },
     });
     const res = await publicarFichaClaseTool.handler(
       { ficha_path: fichaPath, course_id: 42, modo: 'oculto' },
@@ -205,15 +215,17 @@ Despedida.
     );
     expect(res.isError).toBeFalsy();
     const data = JSON.parse(res.content[0]!.text);
-    expect(data.status).toBe('updated');
     expect(data.seccion.idnumber).toBe(sectionIdnumber);
     expect(data.recursos).toHaveLength(2);
     const apertura = data.recursos.find((r: { component_id: string }) => r.component_id === 'apertura');
-    expect(apertura.status).toBe('updated_visibility');
+    expect(apertura.status).toBe('updated');
     expect(apertura.moodle_id).toBe(501);
     const cierre = data.recursos.find((r: { component_id: string }) => r.component_id === 'cierre');
-    expect(cierre.status).toBe('missing');
-    expect(data.advertencias.some((a: string) => a.includes('cierre'))).toBe(true);
+    expect(cierre.status).toBe('created');
+    expect(upsertCalls).toHaveLength(2);
+    // Style wrapping is applied: HTML content starts with <div style=
+    const aperturaCall = upsertCalls.find((c) => c.idnumber === aperturaIdnumber)!;
+    expect(String(aperturaCall.content)).toMatch(/^<div style="/);
   });
 
   it('respects explicit section_id override', async () => {

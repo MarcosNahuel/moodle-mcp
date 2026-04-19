@@ -83,6 +83,17 @@ export const ComponenteSchema = z
     tipo: nonEmpty,
     minutos: z.number().int().positive().optional(),
     asset: z.string().optional(),
+    /**
+     * Named style preset. See `src/utils/estilo-presets.ts` for the list.
+     * When absent, the preset is auto-detected from `tipo`.
+     */
+    estilo: z.string().optional(),
+    /**
+     * Raw CSS (style attribute value) that overrides both the preset and
+     * the auto-detected default. Use sparingly — breaks visual consistency
+     * across the program if over-used.
+     */
+    custom_style: z.string().optional(),
     metadata: z.record(z.unknown()).optional(),
   })
   .strict();
