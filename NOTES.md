@@ -281,6 +281,37 @@ Memoria persistente entre iteraciones. La iteración N lee esto para saber qué 
 
 ---
 
+## Iteración 14 (2026-04-18) — Fase 1 cerrada
+
+**Hecho:**
+- Creado `src/utils/logger.ts`:
+  - `createLogger({ level?, sink?, clock?, redact? })` → `Logger` con `error/warn/info/debug/child`.
+  - Level threshold: `error(0) < warn(1) < info(2) < debug(3)`. Reusa `LOG_LEVELS` de `config.ts`.
+  - Emite JSON-per-line con `ts` (ISO), `level`, `msg`, merged fields.
+  - Sink default: `process.stderr.write(line + '\n')` (stdout reservado para JSON-RPC MCP).
+  - `redact: string[]` — cada string se reemplaza por `***` en msg y campos (deep walk, escape regex metachars).
+  - `child(baseFields)` devuelve logger que merge los fields en cada call (call-site tiene prioridad).
+  - Circular refs → `[Circular]` sin throw (dual walk: uno en `deepRedact`, otro en `safeStringify`).
+  - Invalid level en constructor → `throw Error`.
+  - Export `nullLogger` no-op para módulos que quieran un default.
+  - `deepRedact` exportado para reuso (ej. logs específicos fuera del logger).
+- `tests/unit/logger.test.ts` — 16 tests: JSON-per-line shape, field merge, level threshold, default info, debug enabled por `level: 'debug'`, invalid level rechaza, redacción msg+fields+nested, regex escape en redact, child merge, child-of-child, circular, call-site override, deepRedact empty/array/circular, nullLogger no-op.
+- Fix: helper `makeCaptured` cambió `records` getter por función (getter dentro del retorno del helper no funcionaba con destructuring).
+- tsc --noEmit limpio. **Total: 103/103 tests verde**.
+- Ítem 6 de Fase 1 ✅.
+- Ítem "Commit: `feat: core client, config, idempotency, logger`" ✅ (cierre simbólico de Fase 1).
+- **Fase 1 completa.** 🎉
+
+**Estado del repo al cerrar Fase 1:**
+- `src/config.ts`, `src/client/{errors,moodle-client}.ts`, `src/utils/{rate-limit,idempotency,markdown-to-html,logger}.ts`.
+- 7 test files en `tests/unit/` con 103 casos.
+- Cobertura no medida todavía (Fase 5 lo exige ≥80%). Todo lo escrito tiene tests directos.
+- Sin `src/schemas/`, `src/adapters/`, `src/tools/`, `src/server.ts`, `src/index.ts` — esas son Fases 2-4.
+
+**Próximo ítem (iteración 15):** Fase 2 → `src/schemas/ficha-clase.ts` — zod schema completo según §7.1 del CONTEXT. Exportar tipo `FichaClase`.
+
+---
+
 ## Blockers
 
 (Ninguno por ahora.)
