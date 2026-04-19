@@ -7,7 +7,7 @@ Copiado de §5 de `D:/Proyectos/italicia_whatsapp/docs/mcp-moodle/AGENT_LAUNCH.m
 ## Fase 0 — Bootstrap del repo
 - [x] `git init`, `.gitignore` (node_modules, dist, .env, coverage)
 - [x] `package.json` con metadata, scripts, `bin: { "moodle-mcp": "./dist/index.js" }`
-- [ ] `tsconfig.json` target ES2022, module NodeNext, strict true, declaration true
+- [x] `tsconfig.json` target ES2022, module NodeNext, strict true, declaration true
 - [ ] Instalar deps: `@modelcontextprotocol/sdk` (pin ^1.x), `zod`, `marked`, `form-data`, `p-retry`, `gray-matter`
 - [ ] Instalar devDeps: `typescript`, `vitest`, `nock`, `@types/node`, `tsup`, `@vitest/coverage-v8`
 - [ ] `LICENSE` MIT con año 2026 y owner "Italicia"

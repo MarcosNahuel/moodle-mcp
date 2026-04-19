@@ -54,6 +54,26 @@ Memoria persistente entre iteraciones. La iteración N lee esto para saber qué 
 
 ---
 
+## Iteración 3 (2026-04-18)
+
+**Hecho:**
+- Creado `tsconfig.json` con:
+  - `target: ES2022`, `lib: [ES2022]`, `module: NodeNext`, `moduleResolution: NodeNext`.
+  - `strict: true` + extra strictness: `noUncheckedIndexedAccess`, `noImplicitOverride`, `noFallthroughCasesInSwitch`, `noImplicitReturns`, `exactOptionalPropertyTypes`.
+  - `declaration: true`, `declarationMap: true`, `sourceMap: true`.
+  - `outDir: ./dist`, `rootDir: ./src`.
+  - `isolatedModules: true` + `verbatimModuleSyntax: true` (compat con tsup/ESM).
+  - `skipLibCheck: true`, `resolveJsonModule: true`, `types: ["node"]`.
+  - Include `src/**/*`, excluye `tests`, `**/*.test.ts`, `dist`, `coverage`, `node_modules`.
+- Validado parse JSON OK. `tsc --noEmit` no corrió aún porque `@types/node` y `typescript` no están instalados todavía (próximo ítem).
+- Ítem 3 de Fase 0 ✅.
+
+**Próximo ítem (iteración 4):** Fase 0 → Instalar deps prod (`@modelcontextprotocol/sdk`, `zod`, `marked`, `form-data`, `p-retry`, `gray-matter`). Resolver versión exacta ^1.x del SDK MCP al momento de `npm install` (según §2 decisión 5 de AGENT_LAUNCH).
+
+**Decisión técnica en iteración 3:** habilité `exactOptionalPropertyTypes` y `noUncheckedIndexedAccess` además del strict base. Razón: el spec §18.5 del CONTEXT ("Tipos primero. Zod schema → tipos TS inferidos → implementación. Cero any") y §4.2 del AGENT_LAUNCH ("Zod schema primero...") sugieren tipado muy estricto. Si algún preset de tsup/vitest falla por esto, lo relajo en esa iteración y anoto aquí.
+
+---
+
 ## Blockers
 
 (Ninguno por ahora.)
