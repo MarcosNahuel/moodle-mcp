@@ -161,6 +161,32 @@ Memoria persistente entre iteraciones. La iteración N lee esto para saber qué 
 
 ---
 
+## Iteración 9 (2026-04-18)
+
+**Hecho:**
+- Creado `src/client/errors.ts`:
+  - Clase base `MoodleWsError extends Error` con `code`, `functionName`, `details`, `cause`. Code default `MOODLE_WS_ERROR`.
+  - `MoodleTokenError` → `code: MOODLE_WS_TOKEN_INVALID`.
+  - `MoodleTimeoutError` → `code: MOODLE_WS_TIMEOUT`, lleva `timeoutMs`.
+  - `MoodlePluginMissingError` → `code: MOODLE_PLUGIN_MISSING`, lleva `plugin`, mensaje default incluye URL a moodle.org/plugins.
+  - Método `toClientPayload()` que retorna objeto serializable para MCP responses (sin stack trace) — §14.2 del CONTEXT.
+  - Type guard `isMoodleWsError(e)`.
+- `tests/unit/errors.test.ts` con 13 tests: default code, custom options, cause preservation, toClientPayload omit/include, instanceof checks de las 4 clases, type guard positivo y negativo.
+- `tsc --noEmit` limpio.
+- Tests totales: **25/25 verde** (config 12 + errors 13).
+- Ítem 2 de Fase 1 ✅.
+
+**Próximo ítem (iteración 10):** Fase 1 → `src/client/moodle-client.ts` — fetch POST a `/webservice/rest/server.php`, `wstoken`, `moodlewsrestformat=json`, `p-retry` con 3 intentos + backoff, rate limit token-bucket, detección de `exception` en respuesta JSON → throw tipado.
+
+**Códigos de error establecidos (diccionario para iteraciones siguientes):**
+- `MOODLE_WS_ERROR` — genérico/fallback
+- `MOODLE_WS_TOKEN_INVALID` — 401 / token
+- `MOODLE_WS_TIMEOUT` — request abort por timeout
+- `MOODLE_PLUGIN_MISSING` — plugin requerido ausente
+- (futuros del moodle-client) `MOODLE_WS_HTTP_ERROR`, `MOODLE_WS_NETWORK_ERROR`, `MOODLE_WS_EXCEPTION` (for Moodle-returned exceptions).
+
+---
+
 ## Blockers
 
 (Ninguno por ahora.)
