@@ -312,6 +312,27 @@ Memoria persistente entre iteraciones. La iteración N lee esto para saber qué 
 
 ---
 
+## Iteración 15 (2026-04-18) — Fase 2 arranca
+
+**Hecho:**
+- Creado `src/schemas/ficha-clase.ts`:
+  - Constantes enum: `IDIOMAS`, `MODALIDADES`, `PERFILES_ALUMNO`, `ASSET_TIPOS`, `COMPONENTE_TIPOS_CONOCIDOS` (este último informativo, no valida).
+  - Schemas: `VocabularioItemSchema` (passthrough, acepta códigos lang nuevos), `AssetGeneradoSchema` (strict), `ComponenteSchema` (strict, tipo como string libre), `MoodleRefSchema` (strict, course_id positive, section_id_preferido nullable+optional).
+  - `FichaClaseSchema` — `.strict()` + `.superRefine` con cross-field checks:
+    - asset ids únicos.
+    - component ids únicos.
+    - `componente.asset` refs a assets existentes.
+  - Defaults aplicados a `competencias_activadas`, `competencias_prerequisito`, `vocabulario`, `estructuras`, `assets_generados`.
+  - `objetivos_observables` y `componentes` requieren al menos 1 elemento.
+  - Exports: `FichaClase` (output), `FichaClaseInput` (input con opcionales), sub-types (`Componente`, `AssetGenerado`, etc.).
+- `tests/unit/ficha-clase.test.ts` — 17 tests: minimal válido, full con assets y refs, todos idiomas/modalidades/perfiles, null section_id, missing id, tipo inválido, idioma inválido, empty componentes, empty objetivos, unknown key strict, invalid duracion/course_id (2), duplicate asset/component (2), ref missing asset, asset ref OK.
+- tsc --noEmit limpio. **Total: 120/120 tests verde**.
+- Ítem 1 de Fase 2 ✅.
+
+**Próximo ítem (iteración 16):** Fase 2 → `src/schemas/moodle-responses.ts` — schemas zod para respuestas Moodle usadas (`core_course_get_courses_by_field`, `core_course_get_contents`, `core_enrol_get_enrolled_users`, etc.).
+
+---
+
 ## Blockers
 
 (Ninguno por ahora.)

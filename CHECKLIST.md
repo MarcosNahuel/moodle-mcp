@@ -26,7 +26,7 @@ Copiado de §5 de `D:/Proyectos/italicia_whatsapp/docs/mcp-moodle/AGENT_LAUNCH.m
 - [x] Commit: `feat: core client, config, idempotency, logger`
 
 ## Fase 2 — Schemas
-- [ ] `src/schemas/ficha-clase.ts` — zod schema completo según §7.1 del CONTEXT. Exportar tipo `FichaClase`.
+- [x] `src/schemas/ficha-clase.ts` — zod schema completo según §7.1 del CONTEXT. Exportar tipo `FichaClase`.
 - [ ] `src/schemas/moodle-responses.ts` — schemas de respuestas usadas (`core_course_get_courses_by_field`, `core_course_get_contents`, etc.).
 - [ ] `src/adapters/ficha-to-moodle.ts` — función que dado un `FichaClase`, devuelve una lista de operaciones planificadas (sin ejecutar). Facilita testear la lógica de mapeo aislada de la API.
 - [ ] Tests unit de schemas (rechazo de inputs inválidos, aceptación de ejemplos válidos).
