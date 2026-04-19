@@ -41,11 +41,11 @@ Copiado de §5 de `D:/Proyectos/italicia_whatsapp/docs/mcp-moodle/AGENT_LAUNCH.m
 - [x] Cada tool con unit tests (nock). Commit por tool: `feat: tool <nombre>`.
 
 ## Fase 4 — Server MCP
-- [ ] `src/server.ts` — crea server con `@modelcontextprotocol/sdk`, registra tools, `StdioServerTransport`.
-- [ ] `src/index.ts` — entrypoint, lee config, arranca server, maneja SIGTERM/SIGINT con graceful shutdown.
-- [ ] Shebang `#!/usr/bin/env node` en `index.ts` compilado (o via tsup banner).
-- [ ] `tsup.config.ts` — build ESM, target node20, genera `.d.ts`.
-- [ ] Commit: `feat: MCP server wiring and entrypoint`
+- [x] `src/server.ts` — crea server con `@modelcontextprotocol/sdk`, registra tools, `StdioServerTransport`.
+- [x] `src/index.ts` — entrypoint, lee config, arranca server, maneja SIGTERM/SIGINT con graceful shutdown.
+- [x] Shebang `#!/usr/bin/env node` en `index.ts` compilado (o via tsup banner).
+- [x] `tsup.config.ts` — build ESM, target node20, genera `.d.ts`.
+- [x] Commit: `feat: MCP server wiring and entrypoint`
 
 ## Fase 5 — Testing
 - [ ] Fixtures: `tests/fixtures/ficha-clase-ejemplo.md` con Ficha completa realista (italiano A1 unidad 3 clase 5) y assets mínimos (imagen PNG placeholder, audio MP3 placeholder).

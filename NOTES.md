@@ -438,6 +438,34 @@ Modo autónomo — el usuario pidió cerrar todas las iteraciones faltantes en u
 
 ---
 
+## Iteración 20 (2026-04-18) — Fase 4 cerrada
+
+**Hecho:**
+- Instalado `zod-to-json-schema@^3.25.2` como dep de prod (para emitir JSON Schema en `ListToolsResult.inputSchema` que requiere MCP).
+- `src/server.ts`:
+  - `buildServer({ client, logger, name?, version? })` crea `Server` con capability `tools: {}`.
+  - `ALL_TOOLS` array con las 5 tools.
+  - `ListToolsRequestSchema` handler → mapea cada tool a `{ name, description, inputSchema: zodToJsonSchema(..., { target: 'openApi3' }) }`.
+  - `CallToolRequestSchema` handler → lookup por name, parse con zod, `toErrorResponse` en fallo. Cast `as never` porque el SDK incluyó campo `task` opcional para long-running tools (no usamos v0.1).
+- `src/index.ts`:
+  - `loadConfig()` con `ConfigError` → salida exit 2 + stderr.
+  - Crea `logger` con `redact: [config.moodleWsToken]`.
+  - Crea `MoodleClient` con config completa.
+  - Conecta `StdioServerTransport`.
+  - Graceful shutdown en SIGINT/SIGTERM: `server.close()` + exit 0 (con guard contra doble shutdown).
+  - `main().catch` para errores fatales → stderr + exit 1.
+- `tsup.config.ts`: ESM, target node20, dts, sourcemap, banner shebang `#!/usr/bin/env node`.
+- Fix: eliminé shebang del `src/index.ts` porque tsup lo agregaba doble (banner + source).
+- Verificación:
+  - `npm run build` → `dist/index.js` (39 KB), `dist/index.d.ts`, `.map` generados. 21ms ESM + 1.7s DTS.
+  - Smoke test: `MOODLE_URL=... MOODLE_WS_TOKEN=... node dist/index.js` → emite log JSON `server.start` a stderr, conecta stdio sin errores. Timeout external (graceful exit 0 asumido por signal handling).
+  - 174/174 unit tests siguen verde.
+- Ítems 1-5 Fase 4 ✅. **Fase 4 cerrada.**
+
+**Próxima iteración (21):** Fase 5 — fixtures (ficha ejemplo + assets placeholder) + cobertura ≥80% + integration tests con docker-compose Moodle + 3 E2E. La integración E2E real es trabajo no-trivial; voy a dejar el scaffolding listo y marcar algunos integration tests como `.skip` con TODO para ejecución manual cuando haya Moodle docker levantado (el AGENT_LAUNCH es honesto sobre esto en §8 Escalación: puede marcarse como parcial).
+
+---
+
 ## Blockers
 
 (Ninguno por ahora.)
