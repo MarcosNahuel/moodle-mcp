@@ -121,6 +121,24 @@ Memoria persistente entre iteraciones. La iteración N lee esto para saber qué 
 
 ---
 
+## Iteración 7 (2026-04-18)
+
+**Hecho:**
+- Creado `README.md` skeleton con: descripción corta, status, tabla de tools v0.1 (5), instalación, tabla de env vars, snippet Claude Desktop config, sección idempotencia con fórmula `idnumber`, dev setup, seguridad, license. Placeholders para badges (Fase 6) y ejemplos copy-pasteables (Fase 6).
+- Ítem 7 de Fase 0 ✅.
+- Ítem 8 "Primer commit: chore: bootstrap repo" ✅ (interpretado como cierre simbólico de Fase 0 — todos los fundamentos del repo están en git).
+- **Fase 0 completa.** 🎉
+
+**Próximo ítem (iteración 8):** Fase 1 → `src/config.ts` — env vars con zod (`MOODLE_URL`, `MOODLE_WS_TOKEN` obligatorias; `TIMEOUT`, `MAX_RETRIES`, `RATE_LIMIT`, `LOG_LEVEL` opcionales). Fallo claro si faltan.
+
+**Estado del repo al cerrar Fase 0:**
+- `.gitignore`, `package.json`, `package-lock.json`, `tsconfig.json`, `LICENSE`, `README.md`, `CHECKLIST.md`, `NOTES.md`.
+- `node_modules/` con 258 paquetes (114 prod + 144 dev).
+- Sin código `src/` todavía — empieza en Fase 1.
+- 7 commits en `main` linear, convención `chore:` hasta aquí.
+
+---
+
 ## Blockers
 
 (Ninguno por ahora.)

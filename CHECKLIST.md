@@ -11,8 +11,8 @@ Copiado de §5 de `D:/Proyectos/italicia_whatsapp/docs/mcp-moodle/AGENT_LAUNCH.m
 - [x] Instalar deps: `@modelcontextprotocol/sdk` (pin ^1.x), `zod`, `marked`, `form-data`, `p-retry`, `gray-matter`
 - [x] Instalar devDeps: `typescript`, `vitest`, `nock`, `@types/node`, `tsup`, `@vitest/coverage-v8`
 - [x] `LICENSE` MIT con año 2026 y owner "Italicia"
-- [ ] `README.md` skeleton (expandir al final)
-- [ ] Primer commit: `chore: bootstrap repo`
+- [x] `README.md` skeleton (expandir al final)
+- [x] Primer commit: `chore: bootstrap repo`
 
 ## Fase 1 — Infraestructura interna
 - [ ] `src/config.ts` — env vars con zod (MOODLE_URL, MOODLE_WS_TOKEN obligatorias; TIMEOUT, MAX_RETRIES, RATE_LIMIT, LOG_LEVEL opcionales). Fallo claro si faltan.
