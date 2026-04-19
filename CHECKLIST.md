@@ -21,7 +21,7 @@ Copiado de §5 de `D:/Proyectos/italicia_whatsapp/docs/mcp-moodle/AGENT_LAUNCH.m
   - [x] `src/utils/rate-limit.ts` — token bucket aislado (sub-ítem)
   - [x] `src/client/moodle-client.ts` — fetch + timeout + retry + exception detection (sub-ítem)
 - [x] `src/utils/idempotency.ts` — `buildIdnumber(fichaId, componentId)` con sha1 + prefijo `mcp:` + slice(0, 24). Tests unit.
-- [ ] `src/utils/markdown-to-html.ts` — wrapper sobre `marked` con config segura (no raw HTML si no viene del frontmatter del autor). Tests unit.
+- [x] `src/utils/markdown-to-html.ts` — wrapper sobre `marked` con config segura (no raw HTML si no viene del frontmatter del autor). Tests unit.
 - [ ] `src/utils/logger.ts` — JSON-por-línea a stderr, niveles, redactor de token.
 - [ ] Commit: `feat: core client, config, idempotency, logger`
 

@@ -263,6 +263,24 @@ Memoria persistente entre iteraciones. La iteración N lee esto para saber qué 
 
 ---
 
+## Iteración 13 (2026-04-18)
+
+**Hecho:**
+- Creado `src/utils/markdown-to-html.ts`:
+  - `renderMarkdown(md, opts?)` con `marked v14` (async: false para return sincrónico).
+  - Opciones: `sanitize` (default true), `gfm` (default true), `breaks` (default false).
+  - `sanitizeHtml(html)` strippea tags peligrosos (script, style, iframe, object, embed, form, input, button, link, meta, base), event handlers inline (`on*=`), y neutraliza `javascript:` URLs en `href`/`src`/`formaction`/`action`/`xlink:href` reemplazando por `#`.
+  - Preserva `<img>`, `<audio>`, `<video>`, `<source>`, `<a>`, `<p>`, headings, listas, tablas — el contrato de Ficha los usa.
+- `tests/unit/markdown-to-html.test.ts` — 19 tests: inline formatting, headings+lists, img preservation, raw audio, anchors, script/style/iframe strip, self-closing dangerous tags, event handlers, javascript: URLs en href y src, sanitize:false debug, GFM tables, breaks on/off, sanitizeHtml unit tests (nested script, benign passthrough, idempotency).
+- tsc --noEmit limpio. **Total: 87/87 tests verde**.
+- Ítem 5 de Fase 1 ✅.
+
+**Decisión técnica:** sanitización basada en regex — frágil pero suficiente para v0.1 como defensa en profundidad (Moodle tiene sus propios filtros). Anotado en doc de la función como candidato v0.2 para DOMPurify/parser HTML real. Agregado a "Future work".
+
+**Próximo ítem (iteración 14):** Fase 1 → `src/utils/logger.ts` — JSON-por-línea a stderr, niveles, redactor de token.
+
+---
+
 ## Blockers
 
 (Ninguno por ahora.)
@@ -277,6 +295,7 @@ Memoria persistente entre iteraciones. La iteración N lee esto para saber qué 
 - Empaquetado Desktop Extension `.dxt` (v0.3).
 - Facade `publicar_ficha_unidad` (composición N clases + 1 examen) en v0.4+.
 - Webhook listener para drift detection vs Ficha canónica en Git.
+- Reemplazar sanitizer regex-based de `markdown-to-html.ts` con DOMPurify o parser HTML real (v0.2).
 
 ---
 
