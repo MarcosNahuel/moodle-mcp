@@ -111,6 +111,16 @@ Memoria persistente entre iteraciones. La iteración N lee esto para saber qué 
 
 ---
 
+## Iteración 6 (2026-04-18)
+
+**Hecho:**
+- Creado `LICENSE` con texto MIT estándar, año 2026, owner "Italicia".
+- Ítem 6 de Fase 0 ✅.
+
+**Próximo ítem (iteración 7):** Fase 0 → `README.md` skeleton (expandir al final en Fase 6).
+
+---
+
 ## Blockers
 
 (Ninguno por ahora.)
