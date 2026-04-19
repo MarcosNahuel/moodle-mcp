@@ -356,15 +356,54 @@ async function ensureSection(
     };
   }
 
-  // 3. Section does not exist — require plugin to create. v0.1 surfaces
-  // the warning rather than silently failing; integration tests will wire
-  // this up against local_wsmanagesections.
-  advertencias.push(
-    `Section '${plan.section.name}' (idnumber ${plan.section.idnumber}) does not exist yet. ` +
-      `v0.1 does not create sections automatically — create it once manually or install local_wsmanagesections.`,
-  );
+  // 3. Section does not exist — try to create a new one via
+  // `local_wsmanagesections_create_sections`. If the plugin is not
+  // available or the call fails, fall back to the preferred / general
+  // section with an advertencia so publish still completes.
+  try {
+    const created = (await ctx.client.call(
+      'local_wsmanagesections_create_sections',
+      {
+        courseid: exec.courseId,
+        position: 0, // append at end
+        number: 1,
+      },
+    )) as Array<{ sectionid: number; sectionnumber: number }> | undefined;
 
-  // Fall back to the preferred section if given; otherwise section 0 (course home).
+    const newSectionInfo = Array.isArray(created) ? created[0] : undefined;
+    if (newSectionInfo?.sectionid) {
+      // Give the new section a meaningful name via update_sections.
+      await ctx.client.call('local_wsmanagesections_update_sections', {
+        courseid: exec.courseId,
+        sections: [
+          {
+            type: 'id',
+            section: newSectionInfo.sectionid,
+            name: plan.section.name,
+            visible: plan.section.visible ? 1 : 0,
+          },
+        ],
+      });
+
+      return {
+        section: {
+          id: newSectionInfo.sectionid,
+          name: plan.section.name,
+          url: '',
+          idnumber: plan.section.idnumber,
+          sectionnum: newSectionInfo.sectionnumber ?? 0,
+        },
+        status: 'created',
+      };
+    }
+  } catch (e) {
+    advertencias.push(
+      `Could not auto-create section '${plan.section.name}': ${(e as Error).message}. ` +
+        `Falling back to General section.`,
+    );
+  }
+
+  // 4. Fallback: use preferred_section_id or section 0 (course General).
   const fallback =
     (plan.section.preferred_section_id !== null
       ? contents.find((s) => s.id === plan.section.preferred_section_id)
@@ -378,6 +417,10 @@ async function ensureSection(
       },
     );
   }
+  advertencias.push(
+    `Section '${plan.section.name}' (idnumber ${plan.section.idnumber}) did not exist and auto-create failed; ` +
+      `publishing into '${fallback.name}' (section ${fallback.section ?? '?'}) as fallback.`,
+  );
   await setSectionVisibility(ctx, fallback.id, exec.courseId, plan.section.visible);
   return {
     section: sectionDescriptor(fallback, plan.section.idnumber),
