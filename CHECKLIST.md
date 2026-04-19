@@ -59,12 +59,12 @@ Copiado de §5 de `D:/Proyectos/italicia_whatsapp/docs/mcp-moodle/AGENT_LAUNCH.m
 - [x] Commit: `test: unit + integration suite`
 
 ## Fase 6 — Distribución
-- [ ] `.github/workflows/ci.yml` — en PR: lint + type-check + unit. En push a main: también integration. En tag `v*`: publish npm con secret `NPM_TOKEN`.
-- [ ] `README.md` completo: qué es, instalación (`npx moodle-mcp`), config Claude Desktop (snippet JSON copiable), 3 ejemplos de tool calls, tabla de env vars, link a CONTEXT.md.
-- [ ] `examples/ficha-clase-ejemplo.md` copia de fixture, con comentarios pedagógicos.
-- [ ] `examples/setup-claude-desktop.md` paso a paso con screenshots simulados (texto).
-- [ ] `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` mínimos.
-- [ ] Commit: `docs: README, examples, CI`
+- [x] `.github/workflows/ci.yml` — en PR: lint + type-check + unit. En push a main: también integration. En tag `v*`: publish npm con secret `NPM_TOKEN`.
+- [x] `README.md` completo: qué es, instalación (`npx moodle-mcp`), config Claude Desktop (snippet JSON copiable), 3 ejemplos de tool calls, tabla de env vars, link a CONTEXT.md.
+- [x] `examples/ficha-clase-ejemplo.md` copia de fixture, con comentarios pedagógicos.
+- [x] `examples/setup-claude-desktop.md` paso a paso con screenshots simulados (texto).
+- [x] `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` mínimos.
+- [x] Commit: `docs: README, examples, CI`
 
 ## Fase 7 — Verificación final
 - [ ] Correr `npm run build` → `dist/` limpio.
