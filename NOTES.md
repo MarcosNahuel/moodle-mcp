@@ -139,6 +139,28 @@ Memoria persistente entre iteraciones. La iteración N lee esto para saber qué 
 
 ---
 
+## Iteración 8 (2026-04-18) — Fase 1 arranca
+
+**Hecho:**
+- Creado `src/config.ts`:
+  - Export: `loadConfig(env?)`, `MoodleConfig` (type), `ConfigError`, `LogLevel`, `LOG_LEVELS`.
+  - Zod schema `ConfigSchemaBase` con coerción manual de strings (env siempre devuelve string).
+  - Requeridas: `MOODLE_URL`, `MOODLE_WS_TOKEN`. Defaults: `timeoutMs=30000`, `maxRetries=3`, `rateLimitPerSec=10`, `logLevel=info`.
+  - Escape hatch HTTPS: `MOODLE_ALLOW_INSECURE=true` quita refinement de `https://` (para docker test local).
+  - Error handling: `ConfigError` con mensaje humano. No propaga stacks ni zod raw errors al cliente — §14.1/§18.2 del CONTEXT.
+- Creado `tests/unit/config.test.ts` con 12 tests: required missing, https enforcement, insecure override, URL malformed, empty token, numeric coercion (timeout/retries/rate), non-numeric rejection, negative timeout, log level case-normalization, invalid log level.
+- `npx tsc --noEmit` → limpio.
+- `npx vitest run tests/unit/config.test.ts` → **12/12 verde, 375ms**.
+- Ítem 1 de Fase 1 ✅.
+
+**Próximo ítem (iteración 9):** Fase 1 → `src/client/errors.ts` con clases `MoodleWsError`, `MoodleTokenError`, `MoodleTimeoutError`, `MoodlePluginMissingError`.
+
+**Decisiones tomadas:**
+1. `verbatimModuleSyntax` + NodeNext → imports dentro de `src/` y tests usan `.js` extension (`from '../../src/config.js'`). Funciona con vitest 2.1.9.
+2. `noUncheckedIndexedAccess` + `exactOptionalPropertyTypes` no han dado problemas todavía. Confirmado que zod `.default()` juega bien con esto si el raw se construye con `Record<string, unknown>` omitiendo claves ausentes.
+
+---
+
 ## Blockers
 
 (Ninguno por ahora.)

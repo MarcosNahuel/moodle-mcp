@@ -15,7 +15,7 @@ Copiado de §5 de `D:/Proyectos/italicia_whatsapp/docs/mcp-moodle/AGENT_LAUNCH.m
 - [x] Primer commit: `chore: bootstrap repo`
 
 ## Fase 1 — Infraestructura interna
-- [ ] `src/config.ts` — env vars con zod (MOODLE_URL, MOODLE_WS_TOKEN obligatorias; TIMEOUT, MAX_RETRIES, RATE_LIMIT, LOG_LEVEL opcionales). Fallo claro si faltan.
+- [x] `src/config.ts` — env vars con zod (MOODLE_URL, MOODLE_WS_TOKEN obligatorias; TIMEOUT, MAX_RETRIES, RATE_LIMIT, LOG_LEVEL opcionales). Fallo claro si faltan.
 - [ ] `src/client/errors.ts` — clases `MoodleWsError`, `MoodleTokenError`, `MoodleTimeoutError`, `MoodlePluginMissingError`.
 - [ ] `src/client/moodle-client.ts` — fetch POST a `/webservice/rest/server.php`, `wstoken`, `moodlewsrestformat=json`, `p-retry` con 3 intentos + backoff, rate limit token-bucket simple (10 req/s default), detección de `exception` en respuesta JSON y throw tipado.
 - [ ] `src/utils/idempotency.ts` — `buildIdnumber(fichaId, componentId)` con sha1 + prefijo `mcp:` + slice(0, 24). Tests unit.
