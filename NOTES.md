@@ -245,6 +245,24 @@ Memoria persistente entre iteraciones. La iteración N lee esto para saber qué 
 
 ---
 
+## Iteración 12 (2026-04-18)
+
+**Hecho:**
+- Creado `src/utils/idempotency.ts`:
+  - `buildIdnumber(fichaId, componentId)` → `"mcp:" + sha1(trimmed_fichaId + "|" + trimmed_componentId).slice(0, 24)`.
+  - `buildSectionIdnumber(fichaId)` → alias para `buildIdnumber(fichaId, "section")` — matches CONTEXT §8.1.
+  - `isMcpIdnumber(value)` → type guard para identificar ids producidos por este MCP (prefix + 24 hex).
+  - Constantes exportadas: `IDNUMBER_PREFIX = "mcp:"`, `IDNUMBER_HASH_LEN = 24`.
+  - Trim whitespace antes de hashear (evita drift por copy-paste de fichaId con espacios).
+  - Rechaza inputs vacíos con mensaje claro — `TypeError` si no es string, `Error` si string vacío.
+- `tests/unit/idempotency.test.ts` — 14 tests: prefix + longitud, tail hex, determinismo, fórmula explícita contra `crypto.sha1` in-test, distinct inputs → distinct outputs (2 tests), trim, empty fichaId rechaza (2 casos), empty componentId rechaza (2 casos), buildSectionIdnumber equivalence, section formula match, isMcpIdnumber accepts/rejects/non-strings.
+- tsc --noEmit limpio. **Total: 68/68 tests verde**.
+- Ítem 4 de Fase 1 ✅.
+
+**Próximo ítem (iteración 13):** Fase 1 → `src/utils/markdown-to-html.ts` — wrapper sobre `marked` con config segura (no raw HTML si no viene del frontmatter del autor). Tests unit.
+
+---
+
 ## Blockers
 
 (Ninguno por ahora.)
