@@ -187,6 +187,24 @@ Memoria persistente entre iteraciones. La iteración N lee esto para saber qué 
 
 ---
 
+## Iteración 10 (2026-04-18)
+
+**Hecho:**
+- Dividido el ítem `moodle-client.ts` en sub-ítems (rate-limit y moodle-client propiamente dicho). Regla de hierro aplicada: cerré uno.
+- Creado `src/utils/rate-limit.ts` — token bucket simple:
+  - `createTokenBucketLimiter({ tokensPerSec, capacity?, now?, sleep? })`.
+  - Capacity default = tokensPerSec (burst de 1 segundo).
+  - `now` y `sleep` inyectables → tests deterministas con fake clock.
+  - Queue interna FIFO para serializar acquires concurrentes (evita race por token).
+  - Cap explícito en `capacity` (no crecimiento infinito si el bucket queda idle).
+- `tests/unit/rate-limit.test.ts` — 8 tests: inválidos, burst inicial sin sleep, wait post-burst ~100ms, refill progresivo, cap de capacity tras idle, FIFO en 15 concurrentes, capacity custom.
+- tsc --noEmit limpio. Tests totales: **33/33 verde** (config 12 + errors 13 + rate-limit 8).
+- Sub-ítem 1 de moodle-client ✅.
+
+**Próximo ítem (iteración 11):** sub-ítem `src/client/moodle-client.ts` — fetch POST, timeout con AbortController, `p-retry` (3 intentos), invocar rate limiter, detección de `exception` en respuesta JSON (Moodle devuelve `{exception: "...", errorcode: "..."}` cuando falla semánticamente), throw tipado (`MoodleTokenError` si token inválido, `MoodleTimeoutError`, `MoodleWsError` genérico con `errorcode` en `details`). Tests con `nock`.
+
+---
+
 ## Blockers
 
 (Ninguno por ahora.)
