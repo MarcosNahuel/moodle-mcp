@@ -37,6 +37,8 @@ export const CLIENT_ERROR_CODES = {
 } as const;
 
 export interface MoodleClient {
+  /** Base URL of the Moodle instance (no trailing slash, no `/webservice/...`). */
+  readonly baseUrl: string;
   call<T = unknown>(
     functionName: string,
     params?: Record<string, unknown>,
@@ -264,6 +266,7 @@ export function createMoodleClient(opts: MoodleClientOptions): MoodleClient {
   ]);
 
   return {
+    baseUrl,
     async call<T = unknown>(
       functionName: string,
       params: Record<string, unknown> = {},

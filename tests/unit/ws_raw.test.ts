@@ -9,7 +9,7 @@ import type { MoodleClient } from '../../src/client/moodle-client.js';
 import type { ToolContext } from '../../src/tools/types.js';
 
 function fakeClient(impl: MoodleClient['call']): MoodleClient {
-  return { call: impl };
+  return { baseUrl: 'https://aula.example.com', call: impl };
 }
 
 function ctx(client: MoodleClient): ToolContext {

@@ -404,6 +404,40 @@ Memoria persistente entre iteraciones. La iteración N lee esto para saber qué 
 
 ---
 
+## Iteración 19 (2026-04-18) — Fase 3 cerrada
+
+Modo autónomo — el usuario pidió cerrar todas las iteraciones faltantes en un solo turn.
+
+**Hecho:**
+- `src/tools/obtener_contexto_curso.ts` — facade compuesta (`Promise.all` 3 calls), shape §5.1, detecta course not found, cuenta docentes vs alumnos via `TEACHER_ROLE_SHORTNAMES`.
+- `src/tools/publicar_ficha_clase.ts` — lee con `fs.readFile`, `gray-matter`, `FichaClaseSchema.parse`, extrae secciones por anchors `{#id}` con `extractComponentBodies` (regex), llama planner, ejecuta plan.
+  - `executePlan`: 1 `get_contents` snapshot para lookups, `ensureSection` (explicit override / find by planned module idnumber / fallback a preferred o section 0 con advertencia), asset uploads → advertencia (v0.1 no implementa multipart), module upserts → si existe `edit_module` show/hide, si no existe → advertencia + status "missing".
+  - Decisión documentada: v0.1 solo actualiza visibility de módulos existentes. Create via WS requiere plugin `local_wsmanagesections` o equivalente — integration tests (Fase 5) validarán cuál endpoint usar exacto.
+- `src/tools/publicar_preview.ts` — delega a `publicar_ficha_clase` con `modo: "oculto"`, agrega `preview_url` construido de `client.baseUrl + /course/view.php?id=...#section-...`.
+- `src/tools/confirmar_preview.ts` — `core_course_edit_section show` + opcional loop de `core_course_edit_module show` para recursos_ids.
+- Refactor menor: `MoodleClient` expone `baseUrl` readonly.
+- `tests/unit/tools-facades.test.ts` — 12 tests:
+  - `extractComponentBodies`: split por anchors, empty on no anchors, trailing content.
+  - `obtener_contexto_curso`: snapshot completo con roles, course not found.
+  - `publicar_ficha_clase`: rechaza path relativo, publica con módulo existente y genera advertencia para faltante, respeta section_id override.
+  - `publicar_preview`: publishes hidden + preview_url correcto.
+  - `confirmar_preview`: show section sin recursos, show section + N módulos, invalid input.
+- Fix: el ensureSection ahora identifica "la section de esta Ficha" buscando cualquier módulo de la Ficha (por planned idnumber) en cada section; Moodle no expone section.idnumber en `core_course_get_contents`.
+- tsc --noEmit limpio. **Total: 174/174 tests verde**.
+- Ítems 2, 3, 4, 5 de Fase 3 ✅ + commit simbólico.
+
+**Estado al cerrar Fase 3:** 5 tools MCP listos (`ws_raw`, `obtener_contexto_curso`, `publicar_ficha_clase`, `publicar_preview`, `confirmar_preview`). API shape completo con v0.1 caveats documentados.
+
+**Gaps conocidos v0.1 (documentados como advertencias runtime + en NOTES):**
+- Upload de assets: planificado pero no ejecutado (falta multipart contra draft file area).
+- Create de secciones nuevas: requiere `local_wsmanagesections`; fallback actual usa section 0 o preferred con advertencia.
+- Create de módulos nuevos: requiere plugin; módulos inexistentes reciben status "missing" + advertencia.
+- Resolución real de todos estos gaps: integration tests Fase 5 contra Moodle docker.
+
+**Próxima iteración (20):** Fase 4 — `src/server.ts` + `src/index.ts` + `tsup.config.ts`.
+
+---
+
 ## Blockers
 
 (Ninguno por ahora.)

@@ -34,11 +34,11 @@ Copiado de §5 de `D:/Proyectos/italicia_whatsapp/docs/mcp-moodle/AGENT_LAUNCH.m
 
 ## Fase 3 — Tools (primitive + facades v0.1)
 - [x] `src/tools/ws_raw.ts` — primitive que expone `ws_raw(function_name, params)`.
-- [ ] `src/tools/obtener_contexto_curso.ts` — compone `core_course_get_courses_by_field` + `core_course_get_contents` + `core_enrol_get_enrolled_users`.
-- [ ] `src/tools/publicar_ficha_clase.ts` — lee `ficha_path`, parsea YAML + markdown, valida, ejecuta adapter, upserts con idempotencia. Modo default: `oculto`.
-- [ ] `src/tools/publicar_preview.ts` — alias que fuerza `modo: oculto` y devuelve `preview_url`.
-- [ ] `src/tools/confirmar_preview.ts` — `core_course_edit_section` + `core_course_edit_module` para visibilidad.
-- [ ] Cada tool con unit tests (nock). Commit por tool: `feat: tool <nombre>`.
+- [x] `src/tools/obtener_contexto_curso.ts` — compone `core_course_get_courses_by_field` + `core_course_get_contents` + `core_enrol_get_enrolled_users`.
+- [x] `src/tools/publicar_ficha_clase.ts` — lee `ficha_path`, parsea YAML + markdown, valida, ejecuta adapter, upserts con idempotencia. Modo default: `oculto`.
+- [x] `src/tools/publicar_preview.ts` — alias que fuerza `modo: oculto` y devuelve `preview_url`.
+- [x] `src/tools/confirmar_preview.ts` — `core_course_edit_section` + `core_course_edit_module` para visibilidad.
+- [x] Cada tool con unit tests (nock). Commit por tool: `feat: tool <nombre>`.
 
 ## Fase 4 — Server MCP
 - [ ] `src/server.ts` — crea server con `@modelcontextprotocol/sdk`, registra tools, `StdioServerTransport`.
