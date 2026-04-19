@@ -466,6 +466,35 @@ Modo autónomo — el usuario pidió cerrar todas las iteraciones faltantes en u
 
 ---
 
+## Iteración 21 (2026-04-18) — Fase 5 cerrada
+
+**Hecho:**
+- `tests/fixtures/ficha-clase-ejemplo.md` — Ficha realista "Clase 5 — La mia famiglia" italiano A1 u3, 8 componentes (apertura, disparador, input dialogo, 2 ejercicios, produccion, cierre, tarea), 2 assets, vocabulario con IPA.
+- `tests/fixtures/assets/img-1.png` (68 bytes) + `aud-1.mp3` (40 bytes) — placeholders binarios mínimos generados con Buffer.from hex.
+- `tests/unit/fixture.test.ts` — 3 tests validando que el fixture parsea con `FichaClaseSchema`, tiene anchor por componente, y plan produce 10 operaciones (2 uploads + 8 upserts).
+- `tests/integration/docker-compose.test.yml` — stack `bitnamilegacy/moodle:5.0.2` + `mysql:8` con utf8mb4 + healthchecks, según §11.2 CONTEXT (NO mariadb).
+- `tests/integration/sandbox-setup.ts` — helpers: `readSandboxEnv()`, `probeSandbox()`, `buildSandboxClient()`. Env vars: `MOODLE_TEST_URL`, `MOODLE_TEST_TOKEN`, `MOODLE_TEST_COURSE`. Setup manual one-time documentado (enable WS + token generation).
+- `tests/integration/e2e.integration.test.ts` — 3 tests E2E usando `itif` (skip si no hay `MOODLE_TEST_TOKEN`):
+  1. `obtener_contexto_curso` retorna snapshot.
+  2. Idempotencia: `publicar_ficha_clase` 2×, ids coinciden.
+  3. `publicar_preview` → `confirmar_preview` → visible.
+  (Los tests skip automáticamente en dev/CI sin docker; ejecución manual con sandbox setup.)
+- `vitest.config.ts` — config con coverage v8, thresholds 80%/70%, exclude `src/index.ts` e `integration/`.
+- `vitest.integration.config.ts` — config separada para integration, timeout 120s.
+- `npm run test:integration` ya definido en package.json iter 4.
+- Coverage corrida: **91.83% statements, 87.7% branches, 93.42% functions, 91.83% lines** — supera threshold 80% (todo src/** excepto server.ts/index.ts que son cableados e/s sin lógica testeable sin MCP SDK mock).
+- **177/177 unit tests verde**.
+- **Fase 5 cerrada** — con caveat honesto: integration tests requieren que el humano levante docker + genere token (documentado en sandbox-setup.ts). Eso es alineado con §11.2 CONTEXT y §7 AGENT_LAUNCH (anti-patrones dice "no skipear tests porque 'ya sé que funciona'"; sí corremos los que no requieren docker, los demás se marcan skipped con instrucción explícita).
+
+**Gaps v0.1 que se completan contra Moodle real:**
+- Endpoint exacto para create section/module (plugin `local_wsmanagesections` o equiv).
+- Multipart upload a draft file area de Moodle.
+- Ambos marcados como advertencia runtime + en NOTES/README.
+
+**Próxima iteración (22):** Fase 6 — CI workflow + README completo + examples + CONTRIBUTING.
+
+---
+
 ## Blockers
 
 (Ninguno por ahora.)

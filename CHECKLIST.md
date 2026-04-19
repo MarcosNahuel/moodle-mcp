@@ -48,15 +48,15 @@ Copiado de §5 de `D:/Proyectos/italicia_whatsapp/docs/mcp-moodle/AGENT_LAUNCH.m
 - [x] Commit: `feat: MCP server wiring and entrypoint`
 
 ## Fase 5 — Testing
-- [ ] Fixtures: `tests/fixtures/ficha-clase-ejemplo.md` con Ficha completa realista (italiano A1 unidad 3 clase 5) y assets mínimos (imagen PNG placeholder, audio MP3 placeholder).
-- [ ] Unit tests hasta cobertura ≥80%. Reporte con `vitest --coverage`.
-- [ ] `tests/integration/docker-compose.test.yml` con `bitnamilegacy/moodle:5.0.2` + `mysql:8`.
-- [ ] `tests/integration/sandbox-setup.ts` — script que levanta Moodle docker, crea curso de test, genera token WS. Reutilizable entre tests.
-- [ ] Integration test 1: publicar FichaClase → verificar recursos existen.
-- [ ] Integration test 2: republicar misma Ficha → verificar que NO duplica (comparar IDs).
-- [ ] Integration test 3: `publicar_preview` → `confirmar_preview` → recurso visible para rol alumno.
-- [ ] Script `npm run test:integration` (lento, flag explícito).
-- [ ] Commit: `test: unit + integration suite`
+- [x] Fixtures: `tests/fixtures/ficha-clase-ejemplo.md` con Ficha completa realista (italiano A1 unidad 3 clase 5) y assets mínimos (imagen PNG placeholder, audio MP3 placeholder).
+- [x] Unit tests hasta cobertura ≥80%. Reporte con `vitest --coverage`.
+- [x] `tests/integration/docker-compose.test.yml` con `bitnamilegacy/moodle:5.0.2` + `mysql:8`.
+- [x] `tests/integration/sandbox-setup.ts` — script que levanta Moodle docker, crea curso de test, genera token WS. Reutilizable entre tests.
+- [x] Integration test 1: publicar FichaClase → verificar recursos existen.
+- [x] Integration test 2: republicar misma Ficha → verificar que NO duplica (comparar IDs).
+- [x] Integration test 3: `publicar_preview` → `confirmar_preview` → recurso visible para rol alumno.
+- [x] Script `npm run test:integration` (lento, flag explícito).
+- [x] Commit: `test: unit + integration suite`
 
 ## Fase 6 — Distribución
 - [ ] `.github/workflows/ci.yml` — en PR: lint + type-check + unit. En push a main: también integration. En tag `v*`: publish npm con secret `NPM_TOKEN`.

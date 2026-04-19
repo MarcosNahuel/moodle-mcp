@@ -1,0 +1,58 @@
+# Integration test stack for moodle-mcp.
+#
+# Usage:
+#   docker compose -f tests/integration/docker-compose.test.yml up -d
+#   # wait for Moodle to finish installing (2-5 min on first run)
+#   npm run test:integration
+#   docker compose -f tests/integration/docker-compose.test.yml down -v
+#
+# Images pinned to match production at aula.italicia.com exactly so CI
+# behaviour never diverges from prod (CONTEXT.md §11.2, §18.15).
+
+services:
+  moodle-db:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: moodle
+      MYSQL_USER: moodle
+      MYSQL_PASSWORD: moodlepass
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootpass"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  moodle:
+    image: bitnamilegacy/moodle:5.0.2
+    depends_on:
+      moodle-db:
+        condition: service_healthy
+    environment:
+      MOODLE_DATABASE_TYPE: mysqli
+      MOODLE_DATABASE_HOST: moodle-db
+      MOODLE_DATABASE_PORT_NUMBER: "3306"
+      MOODLE_DATABASE_NAME: moodle
+      MOODLE_DATABASE_USER: moodle
+      MOODLE_DATABASE_PASSWORD: moodlepass
+      MOODLE_USERNAME: admin
+      MOODLE_PASSWORD: adminpass1!
+      MOODLE_EMAIL: admin@moodle-mcp.test
+      MOODLE_SITE_NAME: moodle-mcp integration sandbox
+      BITNAMI_DEBUG: "true"
+    ports:
+      - "8081:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-fSs", "http://localhost:8080/login/index.php"]
+      interval: 15s
+      timeout: 10s
+      retries: 40
+      start_period: 60s
+
+# No named volumes so `down -v` wipes the stack completely between runs.
