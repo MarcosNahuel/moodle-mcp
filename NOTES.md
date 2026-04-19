@@ -205,6 +205,46 @@ Memoria persistente entre iteraciones. La iteración N lee esto para saber qué 
 
 ---
 
+## Iteración 11 (2026-04-18)
+
+**Hecho:**
+- Creado `src/client/moodle-client.ts`:
+  - `createMoodleClient({ url, token, timeoutMs?, maxRetries?, rateLimiter?, tokensPerSec?, fetch?, retryMinTimeoutMs?, retryFactor? })` → `MoodleClient` con método `call<T>(functionName, params?)`.
+  - POST a `${url}/webservice/rest/server.php` (strip trailing slashes) con body `application/x-www-form-urlencoded`: `wstoken`, `wsfunction`, `moodlewsrestformat=json`, + params flattened.
+  - `flattenParams` maneja objetos anidados (`options[name]=x`), arrays (`options[0][name]=a`), booleanos (→ `1`/`0`), skippa `null`/`undefined`.
+  - Timeout via `AbortController` + `setTimeout` → `MoodleTimeoutError` con `timeoutMs` + `functionName`.
+  - `p-retry` con `retries: maxRetries` (default 3), `minTimeout: 1000ms`, `factor: 2`.
+  - Error mapping:
+    - `AbortError` → `MoodleTimeoutError` (retryable).
+    - `TypeError` network → `MoodleWsError{code: NETWORK_ERROR}` (retryable).
+    - 5xx → `HTTP_5XX` (retryable).
+    - 4xx → `HTTP_4XX` (NON-retryable, `AbortError` p-retry).
+    - Bad JSON → `BAD_JSON` (non-retryable).
+    - Moodle JSON `{exception, errorcode}` con errorcode token-like → `MoodleTokenError` (non-retryable).
+    - Otro errorcode → `MoodleWsError{code: EXCEPTION, details.{exception, errorcode, debuginfo}}` (non-retryable).
+  - `redactToken(s, token)` reemplaza todas las apariciones del token por `***`; se aplica a body 4xx, mensajes de exception, y errores de red. Regex-escape de metacaracteres.
+  - Constantes `CLIENT_ERROR_CODES` exportadas + set `TOKEN_ERROR_CODES` de errorcodes Moodle considerados no-retryables.
+- `tests/unit/moodle-client.test.ts` — 21 tests: redactToken (3), flattenParams (4), POST body shape, URL trailing slash, invalidtoken → MoodleTokenError sin retry, exception genérica → MoodleWsError, redacción en mensajes de exception, 4xx sin retry, 5xx con retry y éxito, 5xx agotado con maxRetries, redacción en body 4xx, network error con retry, timeout via AbortController, rateLimiter.acquire called, empty body → null, bad JSON no retry.
+- tsc --noEmit limpio. **Total: 54/54 tests verde**.
+- Sub-ítem 2 ✅. **Ítem padre moodle-client ✅.**
+
+**Decisión técnica (documentada para futuras iteraciones):** nock 13.5.6 NO intercepta confiablemente el `fetch` nativo de Node 20+ (undici). En lugar de downgradear al módulo `http` o hacer hacks con `MockAgent`, el cliente expone `opts.fetch?: typeof fetch` inyectable. Los tests unit usan un mock fetch (queue de Responses/Errors) — más simple, rápido, y explícito. Nock queda disponible pero los unit tests de facades/tools en Fase 3 usarán el mismo patrón de inyección. Para integration tests (Fase 5) el fetch real contra docker Moodle es suficiente, sin nock.
+
+**Códigos de error del cliente (diccionario):**
+| Code | Retryable | Cuándo |
+|---|---|---|
+| MOODLE_WS_NETWORK_ERROR | sí | fetch throw (no abort) |
+| MOODLE_WS_TIMEOUT | sí | AbortController timeout |
+| MOODLE_WS_HTTP_5XX | sí | response.status >= 500 |
+| MOODLE_WS_HTTP_4XX | no | 400-499 |
+| MOODLE_WS_BAD_JSON | no | JSON.parse fail en 2xx |
+| MOODLE_WS_EXCEPTION | no | JSON con `exception` key |
+| MOODLE_WS_TOKEN_INVALID | no | errorcode en TOKEN_ERROR_CODES |
+
+**Próximo ítem (iteración 12):** Fase 1 → `src/utils/idempotency.ts` — `buildIdnumber(fichaId, componentId)` con sha1 + prefijo `mcp:` + slice(0, 24). Tests unit.
+
+---
+
 ## Blockers
 
 (Ninguno por ahora.)
