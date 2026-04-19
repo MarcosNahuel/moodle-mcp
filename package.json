@@ -1,0 +1,72 @@
+{
+  "name": "moodle-mcp",
+  "version": "0.1.0",
+  "description": "Model Context Protocol (MCP) server for Moodle. Lets AI agents publish and manage pedagogical content (lessons, resources, activities) in Moodle via Web Services API with guaranteed idempotency.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "moodle-mcp": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "moodle",
+    "moodle-webservices",
+    "lms",
+    "ai-agent",
+    "claude",
+    "anthropic",
+    "education",
+    "edtech"
+  ],
+  "author": "Italicia",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/italicia/moodle-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/italicia/moodle-mcp/issues"
+  },
+  "homepage": "https://github.com/italicia/moodle-mcp#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "form-data": "^4.0.0",
+    "gray-matter": "^4.0.3",
+    "marked": "^14.0.0",
+    "p-retry": "^6.2.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@vitest/coverage-v8": "^2.0.0",
+    "nock": "^13.5.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.0.0"
+  }
+}

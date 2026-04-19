@@ -34,6 +34,26 @@ Memoria persistente entre iteraciones. La iteración N lee esto para saber qué 
 
 ---
 
+## Iteración 2 (2026-04-18)
+
+**Hecho:**
+- Creado `package.json` con:
+  - `name: moodle-mcp`, `version: 0.1.0`, `type: module`, `license: MIT`, `author: Italicia`.
+  - `bin: { "moodle-mcp": "./dist/index.js" }`.
+  - `files: ["dist", "README.md", "LICENSE"]` → lo que publica npm.
+  - `engines.node: >=20`.
+  - Scripts: `build` (tsup), `dev` (tsup watch), `typecheck` (tsc --noEmit), `test` (vitest run), `test:coverage`, `test:integration` (config separada), `prepublishOnly`.
+  - `publishConfig.access: public`.
+  - Deps prod/dev con ranges `^x.y.z` como dicta §3.1 del CONTEXT. Las versiones concretas se fijan al `npm install` del próximo ítem (el lock file será la fuente de verdad de la versión pineada).
+- Validado con `node -e "JSON.parse(...)"` → OK.
+- Ítem 2 de Fase 0 ✅.
+
+**Próximo ítem (iteración 3):** Fase 0 → `tsconfig.json` target ES2022, module NodeNext, strict true, declaration true.
+
+**Decisión menor:** el repo GitHub URL es `github.com/italicia/moodle-mcp` como placeholder. Si el org/name final difiere (ej. scope `@italicia/moodle-mcp` por conflicto npm), se actualiza en Fase 7. Anotado aquí para recordar.
+
+---
+
 ## Blockers
 
 (Ninguno por ahora.)
