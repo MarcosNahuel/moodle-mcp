@@ -34,4 +34,12 @@ $functions = [
         'capabilities' => 'moodle/course:manageactivities',
         'ajax'         => true,
     ],
+    'local_italiciamcp_upload_file' => [
+        'classname'    => 'local_italiciamcp\\external\\upload_file',
+        'methodname'   => 'execute',
+        'description'  => 'Upload a base64-encoded file into the course media filearea. Returns pluginfile URL.',
+        'type'         => 'write',
+        'capabilities' => 'moodle/course:manageactivities',
+        'ajax'         => true,
+    ],
 ];
