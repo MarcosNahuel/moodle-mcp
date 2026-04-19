@@ -1,5 +1,5 @@
 {
-  "name": "@marcosnahuel/moodle-mcp",
+  "name": "@nahuelalbornoz/moodle-mcp",
   "version": "0.1.0",
   "description": "Model Context Protocol (MCP) server for Moodle. Lets AI agents publish and manage pedagogical content (lessons, resources, activities) in Moodle via Web Services API with guaranteed idempotency.",
   "type": "module",
