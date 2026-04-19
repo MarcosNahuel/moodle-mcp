@@ -93,6 +93,24 @@ Memoria persistente entre iteraciones. La iteración N lee esto para saber qué 
 
 ---
 
+## Iteración 5 (2026-04-18)
+
+**Hecho:**
+- `npm install --no-audit --no-fund` → 144 paquetes adicionales, 3s. Warn deprecated glob@10.5.0 (dep transitiva, no crítico, ignoro).
+- DevDeps resueltas:
+  - `typescript@5.9.3`
+  - `vitest@2.1.9`
+  - `nock@13.5.6`
+  - `@types/node@24.12.2`
+  - `tsup@8.5.1`
+  - `@vitest/coverage-v8@2.1.9`
+- Binarios verificados: `tsc 5.9.3` y `vitest 2.1.9` responden `--version`.
+- Ítem 5 de Fase 0 ✅.
+
+**Próximo ítem (iteración 6):** Fase 0 → `LICENSE` MIT con año 2026 y owner "Italicia".
+
+---
+
 ## Blockers
 
 (Ninguno por ahora.)

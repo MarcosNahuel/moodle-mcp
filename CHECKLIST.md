@@ -9,7 +9,7 @@ Copiado de §5 de `D:/Proyectos/italicia_whatsapp/docs/mcp-moodle/AGENT_LAUNCH.m
 - [x] `package.json` con metadata, scripts, `bin: { "moodle-mcp": "./dist/index.js" }`
 - [x] `tsconfig.json` target ES2022, module NodeNext, strict true, declaration true
 - [x] Instalar deps: `@modelcontextprotocol/sdk` (pin ^1.x), `zod`, `marked`, `form-data`, `p-retry`, `gray-matter`
-- [ ] Instalar devDeps: `typescript`, `vitest`, `nock`, `@types/node`, `tsup`, `@vitest/coverage-v8`
+- [x] Instalar devDeps: `typescript`, `vitest`, `nock`, `@types/node`, `tsup`, `@vitest/coverage-v8`
 - [ ] `LICENSE` MIT con año 2026 y owner "Italicia"
 - [ ] `README.md` skeleton (expandir al final)
 - [ ] Primer commit: `chore: bootstrap repo`
