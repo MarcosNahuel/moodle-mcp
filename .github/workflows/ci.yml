@@ -6,6 +6,13 @@ on:
   push:
     branches: [main]
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      run_integration:
+        description: 'Run integration tests against Moodle docker'
+        required: false
+        default: 'false'
+        type: boolean
 
 jobs:
   lint-test:
@@ -31,7 +38,12 @@ jobs:
   integration:
     name: Integration tests against Moodle docker
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Opt-in only: trigger manually from Actions tab with "Run integration
+    # tests" checked. Requires MOODLE_TEST_TOKEN secret plus a pre-seeded
+    # course in the docker Moodle (see tests/integration/sandbox-setup.ts).
+    # Running on free runners is flaky — MySQL 8 often OOMs during first-boot
+    # initdb. Use a self-hosted / larger runner for reliability.
+    if: github.event_name == 'workflow_dispatch' && inputs.run_integration == true
     needs: lint-test
     steps:
       - uses: actions/checkout@v4
