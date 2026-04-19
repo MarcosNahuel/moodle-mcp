@@ -495,9 +495,70 @@ Modo autónomo — el usuario pidió cerrar todas las iteraciones faltantes en u
 
 ---
 
+## Iteración 22 (2026-04-18) — Fase 6 + 7 cerradas
+
+**Fase 6 hecho:**
+- `.github/workflows/ci.yml` — 3 jobs: `lint-test` (typecheck + coverage + build), `integration` (docker compose up + wait + test:integration + down) solo en push a main, `publish` en tags `v*` con provenance + `NPM_TOKEN` secret.
+- `README.md` expandido: badges CI/npm/license, tabla completa de env vars (con `MOODLE_ALLOW_INSECURE`), 3 ejemplos JSON copy-paste de tool calls (`obtener_contexto_curso`, `publicar_preview`+`confirmar_preview`, `ws_raw`), sección explícita "v0.1 caveats" con gaps honestos (asset upload, create module).
+- `examples/ficha-clase-ejemplo.md` — copia del fixture con comentarios pedagógicos inline en el frontmatter.
+- `examples/setup-claude-desktop.md` — guía paso a paso: token generation, config path por OS, JSON config, smoke test, troubleshooting.
+- `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` mínimos.
+
+**Fase 7 hecho:**
+- `npm run build` → `dist/index.js` 39.18 KB + `.d.ts` + sourcemap. Clean.
+- `npm pack --dry-run` → tarball **41.8 KB**, 6 archivos (LICENSE, README.md, package.json, dist/{index.js, index.js.map, index.d.ts}). Sin tests/node_modules/.env/secretos. Bien bajo el límite de 5 MB de §6.5.
+- `npm test` → **177/177 unit tests verde**.
+- `npm run test:coverage` → cobertura global **91.83% statements, 87.7% branches, 93.42% functions, 91.83% lines** > thresholds (80/70/80/80). Excluído `src/index.ts` y `src/server.ts` (cableado puro I/O con MCP SDK).
+- Smoke test: `MOODLE_URL=... MOODLE_WS_TOKEN=... node dist/index.js` emite JSON log `server.start` a stderr y conecta stdio. Shebang `#!/usr/bin/env node` presente. Exit 0 en graceful shutdown.
+- Tag `v0.1.0` creado localmente (push lo hace el humano).
+- Commit final `release: v0.1.0` con badges en README (ya incluidos en commit Fase 6).
+
+**Notas para el humano operador (Fase 7.6, CI publish):**
+- **NPM_TOKEN**: el workflow `publish` espera `secrets.NPM_TOKEN`. Configurar en GitHub repo settings → Secrets and variables → Actions antes de hacer `git push --tags`.
+- **MOODLE_TEST_TOKEN**: similar para `secrets.MOODLE_TEST_TOKEN` si se quiere que el job `integration` corra contra el docker sandbox en CI.
+- **Integration tests local**: setup manual descrito en `tests/integration/sandbox-setup.ts` (levantar docker, enable WS, generate token, export env vars, `npm run test:integration`).
+- **Gaps v0.1 conocidos** (advertencia runtime + documentados en README):
+  - Asset multipart upload no implementado (se emiten advertencias por asset planificado).
+  - Creación de secciones y módulos nuevos requiere plugin `local_wsmanagesections` instalado en el Moodle target; módulos inexistentes reciben `status: "missing"` + advertencia.
+  - Ambos son v0.2 work; integration tests contra Moodle real los validarán y cerrarán.
+
+**Evaluación §6 AGENT_LAUNCH (criterios para emitir promise):**
+1. ✅ Estructura de archivos según §2.3 CONTEXT (adaptada v0.1 — sin gift-builder, ficha-examen, csv tools).
+2. ✅ `npm run build` compila sin warnings TS.
+3. ✅ `npm test` 100% pasando, cobertura ≥80%.
+4. ⚠ `npm run test:integration` — los 3 E2E están implementados pero no verificados contra docker real (requiere docker + token WS del humano operador). Los tests se *autoconfiguran como skip* cuando no hay token, así que `npm run test:integration` "pasa" (0 tests ejecutados, 0 fallan), pero técnicamente la promise de §6.4 ("los 3 E2E listados pasan contra Moodle docker") no se puede verificar desde este loop.
+5. ✅ `npm pack` produce tarball 41.8 KB sin archivos prohibidos.
+6. ✅ README.md con badge npm+CI+license, instalación, Claude Desktop config, 3 ejemplos copiables, tabla env vars.
+7. ✅ Git tag `v0.1.0` creado (push manual pendiente).
+8. ✅ `.github/workflows/ci.yml` válido con 3 jobs.
+9. ✅ `NOTES.md` con decisiones, bloqueos, future work.
+
+**Decisión de promise:**
+- Criterio 4 no se cumple literalmente. §6 exige "los 9 en TRUE para emitir `MOODLE_MCP_V0.1_READY`". El protocolo §8 dice emitir `BLOCKED_NEEDS_HUMAN` cuando un ítem crítico no puede cerrarse sin acción humana.
+- La acción humana requerida es: (a) levantar docker compose + (b) configurar token WS + (c) instalar plugin `local_wsmanagesections` + (d) correr `npm run test:integration` + (e) ajustar endpoints reales según resultado.
+- Emito `BLOCKED_NEEDS_HUMAN` con todo lo demás listo para handoff.
+
+---
+
 ## Blockers
 
-(Ninguno por ahora.)
+**Blocker #1 — Integration tests requieren setup y ejecución humana contra Moodle docker real.**
+
+Estado:
+- Los 3 tests E2E están escritos en `tests/integration/e2e.integration.test.ts` usando `itif` (auto-skip sin `MOODLE_TEST_TOKEN`).
+- `docker-compose.test.yml` con imágenes de prod pinneadas.
+- `sandbox-setup.ts` con helpers + documentación de setup one-time.
+- Gap técnico detectado durante desarrollo: v0.1 del executor (en `publicar_ficha_clase.ts`) solo actualiza visibility de módulos existentes; la creación de nuevos módulos via WS requiere plugin `local_wsmanagesections` (o equivalente) instalado en Moodle. Tests #1 y #2 (publicar + idempotencia) técnicamente pasan contra un Moodle con módulos pre-seeded (porque los lookups los encuentran), pero si los módulos no existen se reportan como `"missing"`.
+
+Qué necesita el humano:
+1. `docker compose -f tests/integration/docker-compose.test.yml up -d` y esperar 3-5 min a que Moodle complete install.
+2. Login admin (admin / adminpass1!), enable WS, crear servicio externo con las funciones de §9 CONTEXT, generar token.
+3. Crear un curso de test y opcionalmente pre-seed los módulos del fixture con sus idnumbers calculados.
+4. Instalar `local_wsmanagesections` desde moodle.org/plugins si se quiere validar el path de creación automática (v0.2 requisito).
+5. Exportar env vars y correr `npm run test:integration`.
+6. Si fallan, los nombres exactos de WS functions para create de secciones/módulos pueden necesitar ajuste — probablemente una iteración de desarrollo.
+
+Sin ese ciclo, los tests no pueden ejecutarse y §6.4 queda como verificación pendiente.
 
 ---
 
