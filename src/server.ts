@@ -47,6 +47,11 @@ import { obtenerCompletionTool } from './tools/gradebook/obtener_completion.js';
 import { obtenerIntentosQuizTool } from './tools/gradebook/obtener_intentos_quiz.js';
 import { obtenerEntregasAssignTool } from './tools/gradebook/obtener_entregas_assign.js';
 import { calificarManualmenteTool } from './tools/gradebook/calificar_manualmente.js';
+// v0.5 Phase 8 — Comunicacion family
+import { enviarMensajeMoodleTool } from './tools/comunicacion/enviar_mensaje_moodle.js';
+import { crearAnuncioForoTool } from './tools/comunicacion/crear_anuncio_foro.js';
+import { obtenerLogsCursoTool } from './tools/comunicacion/obtener_logs_curso.js';
+import { obtenerInfoSitioTool } from './tools/comunicacion/obtener_info_sitio.js';
 
 export const ALL_TOOLS: ReadonlyArray<ToolDefinition<unknown>> = [
   wsRawTool,
@@ -85,6 +90,11 @@ export const ALL_TOOLS: ReadonlyArray<ToolDefinition<unknown>> = [
   obtenerIntentosQuizTool,
   obtenerEntregasAssignTool,
   calificarManualmenteTool,
+  // Comunicacion
+  enviarMensajeMoodleTool,
+  crearAnuncioForoTool,
+  obtenerLogsCursoTool,
+  obtenerInfoSitioTool,
 ] as unknown as ReadonlyArray<ToolDefinition<unknown>>;
 
 export interface BuildServerOptions {
