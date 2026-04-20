@@ -52,6 +52,13 @@ import { enviarMensajeMoodleTool } from './tools/comunicacion/enviar_mensaje_moo
 import { crearAnuncioForoTool } from './tools/comunicacion/crear_anuncio_foro.js';
 import { obtenerLogsCursoTool } from './tools/comunicacion/obtener_logs_curso.js';
 import { obtenerInfoSitioTool } from './tools/comunicacion/obtener_info_sitio.js';
+// v0.5 Phase 9 — Calendario family
+import { crearEventoCalendarioTool } from './tools/calendario/crear_evento_calendario.js';
+import { listarEventosCalendarioTool } from './tools/calendario/listar_eventos_calendario.js';
+import { actualizarEventoTool } from './tools/calendario/actualizar_evento.js';
+import { eliminarEventoTool } from './tools/calendario/eliminar_evento.js';
+// v0.5 Phase 10 — Badges (read-only in v0.5; award deferred v0.6)
+import { listarBadgesUsuarioTool } from './tools/badges/listar_badges_usuario.js';
 
 export const ALL_TOOLS: ReadonlyArray<ToolDefinition<unknown>> = [
   wsRawTool,
@@ -95,6 +102,13 @@ export const ALL_TOOLS: ReadonlyArray<ToolDefinition<unknown>> = [
   crearAnuncioForoTool,
   obtenerLogsCursoTool,
   obtenerInfoSitioTool,
+  // Calendario
+  crearEventoCalendarioTool,
+  listarEventosCalendarioTool,
+  actualizarEventoTool,
+  eliminarEventoTool,
+  // Badges
+  listarBadgesUsuarioTool,
 ] as unknown as ReadonlyArray<ToolDefinition<unknown>>;
 
 export interface BuildServerOptions {
