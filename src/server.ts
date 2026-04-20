@@ -30,6 +30,10 @@ import { actualizarCursoTool } from './tools/curso/actualizar_curso.js';
 import { duplicarCursoTool } from './tools/curso/duplicar_curso.js';
 import { archivarCursoTool } from './tools/curso/archivar_curso.js';
 import { listarMisCursosTool } from './tools/curso/listar_mis_cursos.js';
+// v0.5 Phase 5 — Evaluacion family (partial — 3 of 7; rest deferred v0.6)
+import { configurarQuizTool } from './tools/evaluacion/configurar_quiz.js';
+import { importarGiftTool } from './tools/evaluacion/importar_gift.js';
+import { publicarFichaExamenTool } from './tools/evaluacion/publicar_ficha_examen.js';
 
 export const ALL_TOOLS: ReadonlyArray<ToolDefinition<unknown>> = [
   wsRawTool,
@@ -50,6 +54,10 @@ export const ALL_TOOLS: ReadonlyArray<ToolDefinition<unknown>> = [
   duplicarCursoTool,
   archivarCursoTool,
   listarMisCursosTool,
+  // Evaluacion
+  configurarQuizTool,
+  importarGiftTool,
+  publicarFichaExamenTool,
 ] as unknown as ReadonlyArray<ToolDefinition<unknown>>;
 
 export interface BuildServerOptions {
