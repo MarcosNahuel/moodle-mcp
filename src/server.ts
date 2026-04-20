@@ -15,6 +15,7 @@ import { obtenerContextoCursoTool } from './tools/obtener_contexto_curso.js';
 import { publicarFichaClaseTool } from './tools/publicar_ficha_clase.js';
 import { publicarPreviewTool } from './tools/publicar_preview.js';
 import { confirmarPreviewTool } from './tools/confirmar_preview.js';
+import { generateVideoTool } from './tools/generate_video.js';
 
 export const ALL_TOOLS: ReadonlyArray<ToolDefinition<unknown>> = [
   wsRawTool,
@@ -22,6 +23,7 @@ export const ALL_TOOLS: ReadonlyArray<ToolDefinition<unknown>> = [
   publicarFichaClaseTool,
   publicarPreviewTool,
   confirmarPreviewTool,
+  generateVideoTool,
 ] as unknown as ReadonlyArray<ToolDefinition<unknown>>;
 
 export interface BuildServerOptions {
