@@ -183,6 +183,10 @@ class upsert_page extends external_api {
         $cm->availability        = null;
         $cm->deletioninprogress  = 0;
         $cm->id = add_course_module($cm);
+        // Moodle 5.x add_course_module() does not always persist idnumber; force it.
+        if ($params['idnumber'] !== '') {
+            $DB->set_field('course_modules', 'idnumber', $params['idnumber'], ['id' => $cm->id]);
+        }
 
         // 4. Attach the cm to the section (by number, 0..numsections).
         course_add_cm_to_section($course, $cm->id, (int)$params['sectionnum']);

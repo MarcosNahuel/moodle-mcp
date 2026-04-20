@@ -12,7 +12,7 @@ defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_italiciamcp';
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = 'v0.3.0';
-$plugin->version   = 2026041920;
+$plugin->release   = 'v0.3.5';
+$plugin->version   = 2026041923;
 $plugin->requires  = 2022041900; // Moodle 4.0+
 $plugin->supported = [400, 501]; // Moodle 4.0 to 5.1

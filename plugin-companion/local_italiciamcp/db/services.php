@@ -42,4 +42,12 @@ $functions = [
         'capabilities' => 'moodle/course:manageactivities',
         'ajax'         => true,
     ],
+    'local_italiciamcp_add_questions_gift' => [
+        'classname'    => 'local_italiciamcp\\external\\add_questions_gift',
+        'methodname'   => 'execute',
+        'description'  => 'Parse GIFT text, create questions in a course bank category, append them to an existing quiz by idnumber',
+        'type'         => 'write',
+        'capabilities' => 'moodle/course:manageactivities,moodle/question:add',
+        'ajax'         => true,
+    ],
 ];
