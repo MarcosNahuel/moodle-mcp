@@ -34,6 +34,13 @@ import { listarMisCursosTool } from './tools/curso/listar_mis_cursos.js';
 import { configurarQuizTool } from './tools/evaluacion/configurar_quiz.js';
 import { importarGiftTool } from './tools/evaluacion/importar_gift.js';
 import { publicarFichaExamenTool } from './tools/evaluacion/publicar_ficha_examen.js';
+// v0.5 Phase 6 — Alumnos family
+import { listarAlumnosTool } from './tools/alumnos/listar_alumnos.js';
+import { matricularCsvTool } from './tools/alumnos/matricular_csv.js';
+import { darBajaTool } from './tools/alumnos/dar_baja.js';
+import { crearGrupoTool, asignarAGrupoTool } from './tools/alumnos/grupos.js';
+import { cambiarRolTool } from './tools/alumnos/cambiar_rol.js';
+import { resetPasswordTool } from './tools/alumnos/reset_password.js';
 
 export const ALL_TOOLS: ReadonlyArray<ToolDefinition<unknown>> = [
   wsRawTool,
@@ -58,6 +65,14 @@ export const ALL_TOOLS: ReadonlyArray<ToolDefinition<unknown>> = [
   configurarQuizTool,
   importarGiftTool,
   publicarFichaExamenTool,
+  // Alumnos
+  listarAlumnosTool,
+  matricularCsvTool,
+  darBajaTool,
+  crearGrupoTool,
+  asignarAGrupoTool,
+  cambiarRolTool,
+  resetPasswordTool,
 ] as unknown as ReadonlyArray<ToolDefinition<unknown>>;
 
 export interface BuildServerOptions {
