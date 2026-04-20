@@ -215,13 +215,25 @@ async function executePlan(
       continue;
     }
 
-    // upsert_assignment still falls through to "missing" until Phase 2c
-    // ships the companion plugin endpoint.
+    if (op.kind === 'upsert_assignment') {
+      const result = await upsertAssignmentOp(ctx, op, {
+        courseId: exec.courseId,
+        sectionnum: section.sectionnum,
+      });
+      recursos.push(result);
+      continue;
+    }
+
+    // No other kinds should reach here — the type system already covers
+    // upload_asset / upsert_page / upsert_url / upsert_assignment. This
+    // arm is a defensive fallback for an unexpected op kind so we emit
+    // a structured warning and mark the component missing instead of
+    // crashing the whole publish.
     const existing = moduleIndex.get(op.idnumber);
     if (!existing) {
       advertencias.push(
-        `Module '${op.component_id}' (kind=${op.kind}, idnumber ${op.idnumber}) does not exist yet. ` +
-          `v0.5 phase 2c will add mod_assign auto-create. For now, seed it manually or use ws_raw.`,
+        `Unknown op kind '${(op as { kind: string }).kind}' for component ` +
+          `'${op.component_id}' (idnumber ${op.idnumber}). Not handled by v0.5.`,
       );
       recursos.push({
         component_id: op.component_id,
@@ -344,6 +356,54 @@ export async function upsertUrlOp(
       component_id: op.component_id,
       moodle_id: null,
       tipo: 'url',
+      url: null,
+      idnumber: op.idnumber,
+      status: 'missing',
+    };
+  }
+}
+
+export async function upsertAssignmentOp(
+  ctx: ToolContext,
+  op: Plan['operations'][number] & { kind: 'upsert_assignment' },
+  scope: {
+    courseId: number;
+    sectionnum: number;
+  },
+): Promise<ExecuteResult['recursos'][number]> {
+  try {
+    const introHtml =
+      op.description_markdown.trim() === '' ? '' : renderMarkdown(op.description_markdown);
+    const result = (await ctx.client.call('local_italiciamcp_upsert_assignment', {
+      courseid: scope.courseId,
+      sectionnum: scope.sectionnum,
+      idnumber: op.idnumber,
+      name: op.name,
+      intro: introHtml,
+      duedate: 0,
+      allowsubmissionsfromdate: 0,
+      cutoffdate: 0,
+      grade: 100,
+      visible: op.visible ? 1 : 0,
+    })) as { action: 'created' | 'updated'; cmid: number; instanceid: number; url: string };
+
+    return {
+      component_id: op.component_id,
+      moodle_id: result.cmid,
+      tipo: 'assign',
+      url: result.url,
+      idnumber: op.idnumber,
+      status: result.action,
+    };
+  } catch (e) {
+    ctx.logger.warn('upsert_assignment.failed', {
+      idnumber: op.idnumber,
+      error: (e as Error).message,
+    });
+    return {
+      component_id: op.component_id,
+      moodle_id: null,
+      tipo: 'assign',
       url: null,
       idnumber: op.idnumber,
       status: 'missing',
