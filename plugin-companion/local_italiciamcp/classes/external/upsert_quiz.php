@@ -171,6 +171,16 @@ class upsert_quiz extends external_api {
         $quiz->allowofflineattempts = 0;
         $quiz->id                   = $DB->insert_record('quiz', $quiz);
 
+        // 1b. Create the default quiz_sections row. Without this, attempts
+        // fail with noquestionsfound because the layout builder needs at
+        // least one section to materialize pages from quiz_slots.
+        $section = new \stdClass();
+        $section->quizid           = (int)$quiz->id;
+        $section->firstslot        = 1;
+        $section->heading          = '';
+        $section->shufflequestions = 0;
+        $DB->insert_record('quiz_sections', $section);
+
         // 2. Get module type id.
         $moduletype = $DB->get_record('modules', ['name' => 'quiz'], 'id', MUST_EXIST);
 

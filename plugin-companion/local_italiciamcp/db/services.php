@@ -50,4 +50,28 @@ $functions = [
         'capabilities' => 'moodle/course:manageactivities,moodle/question:add',
         'ajax'         => true,
     ],
+    'local_italiciamcp_delete_module_by_cmid' => [
+        'classname'    => 'local_italiciamcp\\external\\delete_module_by_cmid',
+        'methodname'   => 'execute',
+        'description'  => 'Delete a course_module by its cmid (use for modules without idnumber)',
+        'type'         => 'write',
+        'capabilities' => 'moodle/course:manageactivities',
+        'ajax'         => true,
+    ],
+    'local_italiciamcp_promote_quiz_questions' => [
+        'classname'    => 'local_italiciamcp\\external\\promote_quiz_questions',
+        'methodname'   => 'execute',
+        'description'  => 'Promote all question_versions linked to a quiz from status=draft to status=ready',
+        'type'         => 'write',
+        'capabilities' => 'moodle/course:manageactivities',
+        'ajax'         => true,
+    ],
+    'local_italiciamcp_repair_quiz_sections' => [
+        'classname'    => 'local_italiciamcp\\external\\repair_quiz_sections',
+        'methodname'   => 'execute',
+        'description'  => 'Ensure a quiz has a default quiz_sections row (firstslot=1)',
+        'type'         => 'write',
+        'capabilities' => 'moodle/course:manageactivities',
+        'ajax'         => true,
+    ],
 ];

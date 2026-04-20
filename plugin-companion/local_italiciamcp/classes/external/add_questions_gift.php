@@ -126,24 +126,20 @@ class add_questions_gift extends external_api {
         $qformat->setContextfromfile(false);
         $qformat->setStoponerror(true);
 
-        // qformat_gift emits HTML status messages via echo during import.
-        // Capture and discard so the WS response stays clean JSON.
+        // Capture qformat_gift output (HTML status + any errors) into a buffer
+        // so it can be inspected — but DO NOT discard silently on error.
         ob_start();
-        try {
-            if (!$qformat->importpreprocess()) {
-                ob_end_clean();
-                throw new \moodle_exception('importpreprocessfailed', 'local_italiciamcp', '', null,
-                    'qformat_gift->importpreprocess() returned false');
-            }
-            if (!$qformat->importprocess()) {
-                ob_end_clean();
-                throw new \moodle_exception('importprocessfailed', 'local_italiciamcp', '', null,
-                    'qformat_gift->importprocess() returned false');
-            }
-        } finally {
-            if (ob_get_level() > 0) {
-                ob_end_clean();
-            }
+        $preok = $qformat->importpreprocess();
+        $procok = $preok ? $qformat->importprocess() : false;
+        $importoutput = ob_get_clean();
+
+        if (!$preok) {
+            throw new \moodle_exception('importpreprocessfailed', 'local_italiciamcp', '', null,
+                "qformat_gift->importpreprocess() returned false. Output: " . substr($importoutput, 0, 500));
+        }
+        if (!$procok) {
+            throw new \moodle_exception('importprocessfailed', 'local_italiciamcp', '', null,
+                "qformat_gift->importprocess() returned false. Output: " . substr($importoutput, 0, 500));
         }
 
         // Collect the question ids created by this import.
@@ -152,12 +148,93 @@ class add_questions_gift extends external_api {
 
         if (empty($importedids)) {
             throw new \moodle_exception('noquestionsimported', 'local_italiciamcp', '', null,
-                'GIFT parser returned zero questions. Check GIFT syntax.');
+                "GIFT parser returned zero questions. Check GIFT syntax. Output: " . substr($importoutput, 0, 500));
         }
 
-        // Attach each imported question to the quiz as a new slot.
+        // VERIFY: each imported qid must exist in `question` table with a
+        // corresponding `question_versions` + `question_bank_entries` record.
+        // If not, quiz_add_quiz_question will create slots referencing nothing
+        // and the quiz attempt will fail with "No se han encontrado respuestas".
+        $verified = [];
+        $orphans = [];
         foreach ($importedids as $qid) {
+            $q = $DB->get_record('question', ['id' => $qid], 'id,name,qtype');
+            if (!$q) {
+                $orphans[] = $qid;
+                continue;
+            }
+            // Find the question_versions row for this question.
+            $qv = $DB->get_record_sql(
+                "SELECT qv.id, qv.questionbankentryid, qv.version
+                   FROM {question_versions} qv
+                  WHERE qv.questionid = :qid
+               ORDER BY qv.version DESC",
+                ['qid' => $qid],
+                IGNORE_MULTIPLE
+            );
+            if (!$qv) {
+                $orphans[] = $qid;
+                continue;
+            }
+            // Confirm the bank entry exists.
+            $qbe = $DB->get_record('question_bank_entries', ['id' => $qv->questionbankentryid]);
+            if (!$qbe) {
+                $orphans[] = $qid;
+                continue;
+            }
+            $verified[] = $qid;
+        }
+
+        if (!empty($orphans)) {
+            throw new \moodle_exception(
+                'importverificationfailed',
+                'local_italiciamcp', '', null,
+                "qformat_gift reported " . count($importedids) . " ids but " . count($orphans)
+                . " are orphans (no question_versions or question_bank_entries). Orphan qids: "
+                . implode(',', $orphans) . ". Verified: " . count($verified)
+                . ". This means GIFT import wrote to question table but not to modern Moodle bank schema."
+            );
+        }
+
+        // CRITICAL Moodle 5 fix: qformat_gift->importprocess() creates
+        // question_versions rows with status='draft'. The quiz attempt engine
+        // filters slots to version where status='ready'. With status='draft'
+        // the attempt silently fails with "No se han encontrado respuestas".
+        // Force status='ready' on all imported versions.
+        if (!empty($verified)) {
+            [$insql, $inparams] = $DB->get_in_or_equal($verified, SQL_PARAMS_NAMED, 'qid');
+            $DB->execute(
+                "UPDATE {question_versions} SET status = :ready WHERE questionid $insql",
+                array_merge(['ready' => 'ready'], $inparams)
+            );
+        }
+
+        // Attach each VERIFIED question to the quiz as a new slot.
+        // quiz_add_quiz_question in Moodle 5.x creates the question_references row.
+        foreach ($verified as $qid) {
             quiz_add_quiz_question((int)$qid, $quiz, 0, (float)$params['default_mark']);
+        }
+
+        // Post-verify: every new quiz_slot row must have a question_references row.
+        $slotsorphans = $DB->get_records_sql(
+            "SELECT qs.id, qs.slot
+               FROM {quiz_slots} qs
+          LEFT JOIN {question_references} qr
+                 ON qr.itemid = qs.id
+                AND qr.component = 'mod_quiz'
+                AND qr.questionarea = 'slot'
+              WHERE qs.quizid = :quizid
+                AND qr.id IS NULL",
+            ['quizid' => (int)$quiz->id]
+        );
+        if (!empty($slotsorphans)) {
+            throw new \moodle_exception(
+                'slotsorphansdetected',
+                'local_italiciamcp', '', null,
+                "After quiz_add_quiz_question, " . count($slotsorphans)
+                . " slots in quiz {$quiz->id} have no question_references. "
+                . "Attempts will fail. Slot ids: " . implode(',', array_column($slotsorphans, 'id'))
+            );
         }
 
         // Recompute sumgrades so grade display is correct.
@@ -169,8 +246,8 @@ class add_questions_gift extends external_api {
             'action'      => 'imported',
             'cmid'        => (int)$cm->id,
             'quizid'      => (int)$quiz->id,
-            'imported'    => count($importedids),
-            'questionids' => $importedids,
+            'imported'    => count($verified),
+            'questionids' => $verified,
             'url'         => (new moodle_url('/mod/quiz/edit.php', ['cmid' => $cm->id]))->out(false),
         ];
     }
