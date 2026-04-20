@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
-import { dirname, isAbsolute } from 'node:path';
+import { dirname, isAbsolute, join } from 'node:path';
+import type { AssetTipo } from '../../schemas/ficha-clase.js';
 import matter from 'gray-matter';
 import { z } from 'zod';
 import {
@@ -163,13 +164,29 @@ async function executePlan(
     advertencias,
   });
 
-  const uploadOps = plan.operations.filter((o) => o.kind === 'upload_asset');
+  // ──────────────────────────────────────────────────────────────────
+  // v0.5 Phase 2a: actually upload assets via the companion plugin
+  // `local_italiciamcp_upload_file`. Each upload_asset op reads the
+  // local file, base64-encodes it, calls the plugin, and captures the
+  // resulting pluginfile URL so that upsert_page ops can rewrite their
+  // markdown asset refs (./assets/foo.png) to the real Moodle URL.
+  // ──────────────────────────────────────────────────────────────────
+  const uploadOps = plan.operations.filter(
+    (o): o is Extract<Plan['operations'][number], { kind: 'upload_asset' }> =>
+      o.kind === 'upload_asset',
+  );
+  const assetPathToUrl = new Map<string, string>();
   for (const up of uploadOps) {
-    if (up.kind !== 'upload_asset') continue;
-    advertencias.push(
-      `Asset upload for '${up.asset_id}' (${up.asset_tipo}) planned but not executed — multipart upload is v0.4 work. ` +
-        `Seed '${up.asset_path}' manually or embed a public URL in the markdown.`,
-    );
+    const uploaded = await executeUploadAsset(ctx, up, exec.fichaDir, exec.courseId);
+    if (uploaded === null) {
+      advertencias.push(
+        `Asset upload for '${up.asset_id}' (${up.asset_tipo}) failed — the page will ` +
+          `render with the original markdown path '${up.asset_path}'. Check ctx logs ` +
+          `for 'upload_asset.failed'.`,
+      );
+      continue;
+    }
+    assetPathToUrl.set(up.asset_path, uploaded.url);
   }
 
   const recursos: ExecuteResult['recursos'] = [];
@@ -183,6 +200,7 @@ async function executePlan(
         courseId: exec.courseId,
         sectionnum: section.sectionnum,
         componente: componentsById.get(op.component_id),
+        assetPathToUrl,
       });
       recursos.push(result);
       continue;
@@ -232,9 +250,10 @@ async function upsertPageOp(
     courseId: number;
     sectionnum: number;
     componente: Componente | undefined;
+    assetPathToUrl: Map<string, string>;
   },
 ): Promise<ExecuteResult['recursos'][number]> {
-  const markdown = op.content_markdown;
+  const markdown = rewriteAssetRefs(op.content_markdown, scope.assetPathToUrl);
   const rawHtml = markdown.trim() === '' ? '' : renderMarkdown(markdown);
   const style = resolveStyle({
     tipo: scope.componente?.tipo ?? 'default',
@@ -299,6 +318,143 @@ function moduleTypeFromOp(kind: Exclude<Plan['operations'][number]['kind'], 'upl
     case 'upsert_url':
       return 'url';
   }
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Asset upload helpers (v0.5 Phase 2a)
+// ──────────────────────────────────────────────────────────────────
+
+interface UploadFileResponse {
+  url: string;
+  filename: string;
+  filesize: number;
+  contextid: number;
+}
+
+async function executeUploadAsset(
+  ctx: ToolContext,
+  op: Extract<Plan['operations'][number], { kind: 'upload_asset' }>,
+  fichaDir: string,
+  courseId: number,
+): Promise<{ asset_id: string; url: string } | null> {
+  try {
+    const absPath = isAbsolute(op.asset_path) ? op.asset_path : join(fichaDir, op.asset_path);
+    const buffer = await readFile(absPath);
+    const filename = buildAssetFilename(op.asset_id, op.asset_path);
+    const mimetype = mimeForAsset(op.asset_tipo, op.asset_path);
+    const b64 = buffer.toString('base64');
+
+    const result = (await ctx.client.call('local_italiciamcp_upload_file', {
+      courseid: courseId,
+      filename,
+      filecontent_b64: b64,
+      mimetype,
+    })) as UploadFileResponse;
+
+    return { asset_id: op.asset_id, url: result.url };
+  } catch (e) {
+    ctx.logger.warn('upload_asset.failed', {
+      asset_id: op.asset_id,
+      asset_path: op.asset_path,
+      error: (e as Error).message,
+    });
+    return null;
+  }
+}
+
+/**
+ * Deterministic filename for the Moodle file storage. The companion
+ * plugin overwrites in place when the same filename is uploaded twice,
+ * so tying the filename to the stable `asset_id` keeps republishing
+ * idempotent.
+ */
+export function buildAssetFilename(assetId: string, assetPath: string): string {
+  const ext = assetPath.match(/\.[^./\\]+$/)?.[0].toLowerCase() ?? '';
+  return `${assetId}${ext}`;
+}
+
+/**
+ * Best-effort MIME type from the asset file extension. Falls back to
+ * `asset_tipo`-based defaults for rare cases (Gemini sometimes returns
+ * files without an explicit extension).
+ */
+export function mimeForAsset(tipo: AssetTipo, path: string): string {
+  const ext = path.match(/\.[^./\\]+$/)?.[0]?.toLowerCase() ?? '';
+  const byExt: Record<string, string> = {
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.gif': 'image/gif',
+    '.webp': 'image/webp',
+    '.svg': 'image/svg+xml',
+    '.mp3': 'audio/mpeg',
+    '.m4a': 'audio/mp4',
+    '.ogg': 'audio/ogg',
+    '.wav': 'audio/wav',
+    '.mp4': 'video/mp4',
+    '.webm': 'video/webm',
+    '.pdf': 'application/pdf',
+  };
+  if (byExt[ext]) return byExt[ext];
+  // Fallback by asset_tipo when extension is missing or unknown.
+  switch (tipo) {
+    case 'imagen':
+      return 'image/png';
+    case 'audio_dialogo':
+    case 'audio_vocabulario':
+      return 'audio/mpeg';
+    case 'video':
+      return 'video/mp4';
+    default:
+      return 'application/octet-stream';
+  }
+}
+
+/**
+ * Replace local asset references (e.g. `./assets/img-1.png`) inside
+ * markdown with the pluginfile URL returned by Moodle.
+ *
+ * Matches both the exact `assetPath` from the Ficha frontmatter and its
+ * alternate form (with/without leading `./`) so we tolerate authors who
+ * are inconsistent between frontmatter and markdown body. For the short
+ * alternate we require a non-word boundary character before the match,
+ * so e.g. `./a.png` in the map does not mangle a `./ba.png` in the body.
+ */
+export function rewriteAssetRefs(
+  markdown: string,
+  assetPathToUrl: Map<string, string>,
+): string {
+  if (assetPathToUrl.size === 0) return markdown;
+  let result = markdown;
+  for (const [assetPath, url] of assetPathToUrl) {
+    const normalized = assetPath.replace(/^\.\//, '');
+    const exactPath = assetPath;
+    const altPath = assetPath.startsWith('./') ? normalized : `./${normalized}`;
+
+    const [longer, shorter] =
+      exactPath.length >= altPath.length ? [exactPath, altPath] : [altPath, exactPath];
+
+    // 1. Replace the fully-qualified form with a plain split/join — safe
+    // because paths starting with `./` cannot be a suffix of another
+    // longer path (the leading `.` acts as its own boundary).
+    result = result.split(longer).join(url);
+
+    // 2. For the short alternate, only replace when preceded by a
+    // non-word boundary (start-of-string, whitespace, or common markdown
+    // delimiters like `(`, `[`, `"`, `'`). Word chars and `.`/`/` are
+    // excluded so `a.png` in the map never matches inside `ba.png` or
+    // `path/a.png`.
+    if (longer !== shorter) {
+      const escaped = escapeRegExp(shorter);
+      const re = new RegExp(`(^|[^./\\w-])${escaped}`, 'g');
+      result = result.replace(re, `$1${url}`);
+    }
+  }
+  return result;
+}
+
+function escapeRegExp(literal: string): string {
+  return literal.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 interface EnsureSectionArgs {
