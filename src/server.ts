@@ -24,6 +24,12 @@ import {
   liberarSeccionTool,
 } from './tools/secciones/visibility.js';
 import { reordenarSeccionesTool } from './tools/secciones/reordenar_secciones.js';
+// v0.5 Phase 4 — Curso family
+import { crearCursoTool } from './tools/curso/crear_curso.js';
+import { actualizarCursoTool } from './tools/curso/actualizar_curso.js';
+import { duplicarCursoTool } from './tools/curso/duplicar_curso.js';
+import { archivarCursoTool } from './tools/curso/archivar_curso.js';
+import { listarMisCursosTool } from './tools/curso/listar_mis_cursos.js';
 
 export const ALL_TOOLS: ReadonlyArray<ToolDefinition<unknown>> = [
   wsRawTool,
@@ -38,6 +44,12 @@ export const ALL_TOOLS: ReadonlyArray<ToolDefinition<unknown>> = [
   ocultarSeccionTool,
   liberarSeccionTool,
   reordenarSeccionesTool,
+  // Curso
+  crearCursoTool,
+  actualizarCursoTool,
+  duplicarCursoTool,
+  archivarCursoTool,
+  listarMisCursosTool,
 ] as unknown as ReadonlyArray<ToolDefinition<unknown>>;
 
 export interface BuildServerOptions {
