@@ -206,14 +206,22 @@ async function executePlan(
       continue;
     }
 
-    // Other module kinds (assignment, url) still fall through to v0.1.x
-    // "missing" reporting until the companion plugin exposes create for
-    // those types. Visibility-only update path kept for pre-existing modules.
+    if (op.kind === 'upsert_url') {
+      const result = await upsertUrlOp(ctx, op, {
+        courseId: exec.courseId,
+        sectionnum: section.sectionnum,
+      });
+      recursos.push(result);
+      continue;
+    }
+
+    // upsert_assignment still falls through to "missing" until Phase 2c
+    // ships the companion plugin endpoint.
     const existing = moduleIndex.get(op.idnumber);
     if (!existing) {
       advertencias.push(
         `Module '${op.component_id}' (kind=${op.kind}, idnumber ${op.idnumber}) does not exist yet. ` +
-          `v0.3 only auto-creates mod_page. Create ${op.kind} modules manually or wait for v0.4.`,
+          `v0.5 phase 2c will add mod_assign auto-create. For now, seed it manually or use ws_raw.`,
       );
       recursos.push({
         component_id: op.component_id,
@@ -292,6 +300,50 @@ async function upsertPageOp(
       component_id: op.component_id,
       moodle_id: null,
       tipo: 'page',
+      url: null,
+      idnumber: op.idnumber,
+      status: 'missing',
+    };
+  }
+}
+
+export async function upsertUrlOp(
+  ctx: ToolContext,
+  op: Plan['operations'][number] & { kind: 'upsert_url' },
+  scope: {
+    courseId: number;
+    sectionnum: number;
+  },
+): Promise<ExecuteResult['recursos'][number]> {
+  try {
+    const result = (await ctx.client.call('local_italiciamcp_upsert_url', {
+      courseid: scope.courseId,
+      sectionnum: scope.sectionnum,
+      idnumber: op.idnumber,
+      name: op.name,
+      externalurl: op.externalurl,
+      intro: '',
+      display: 0,
+      visible: op.visible ? 1 : 0,
+    })) as { action: 'created' | 'updated'; cmid: number; instanceid: number; url: string };
+
+    return {
+      component_id: op.component_id,
+      moodle_id: result.cmid,
+      tipo: 'url',
+      url: result.url,
+      idnumber: op.idnumber,
+      status: result.action,
+    };
+  } catch (e) {
+    ctx.logger.warn('upsert_url.failed', {
+      idnumber: op.idnumber,
+      error: (e as Error).message,
+    });
+    return {
+      component_id: op.component_id,
+      moodle_id: null,
+      tipo: 'url',
       url: null,
       idnumber: op.idnumber,
       status: 'missing',
