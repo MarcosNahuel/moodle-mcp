@@ -8,17 +8,17 @@ import {
   type ToolContext,
   type ToolDefinition,
   type ToolResponse,
-} from './types.js';
-import { FichaClaseSchema, type Componente } from '../schemas/ficha-clase.js';
+} from '../types.js';
+import { FichaClaseSchema, type Componente } from '../../schemas/ficha-clase.js';
 import {
   CourseContentsResponseSchema,
   type Section,
   type Module,
-} from '../schemas/moodle-responses.js';
-import { planFichaClase, type Plan } from '../adapters/ficha-to-moodle.js';
-import { MoodleWsError } from '../client/errors.js';
-import { renderMarkdown } from '../utils/markdown-to-html.js';
-import { resolveStyle, wrapWithStyle } from '../utils/estilo-presets.js';
+} from '../../schemas/moodle-responses.js';
+import { planFichaClase, type Plan } from '../../adapters/ficha-to-moodle.js';
+import { MoodleWsError } from '../../client/errors.js';
+import { renderMarkdown } from '../../utils/markdown-to-html.js';
+import { resolveStyle, wrapWithStyle } from '../../utils/estilo-presets.js';
 
 const InputSchema = z
   .object({

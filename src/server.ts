@@ -10,12 +10,12 @@ import type { Logger } from './utils/logger.js';
 import type { ToolDefinition } from './tools/types.js';
 import { toErrorResponse } from './tools/types.js';
 
-import { wsRawTool } from './tools/ws_raw.js';
-import { obtenerContextoCursoTool } from './tools/obtener_contexto_curso.js';
-import { publicarFichaClaseTool } from './tools/publicar_ficha_clase.js';
-import { publicarPreviewTool } from './tools/publicar_preview.js';
-import { confirmarPreviewTool } from './tools/confirmar_preview.js';
-import { generateVideoTool } from './tools/generate_video.js';
+import { wsRawTool } from './tools/primitive/ws_raw.js';
+import { obtenerContextoCursoTool } from './tools/curso/obtener_contexto_curso.js';
+import { publicarFichaClaseTool } from './tools/contenido/publicar_ficha_clase.js';
+import { publicarPreviewTool } from './tools/contenido/publicar_preview.js';
+import { confirmarPreviewTool } from './tools/contenido/confirmar_preview.js';
+import { generateVideoTool } from './tools/contenido/generate_video.js';
 
 export const ALL_TOOLS: ReadonlyArray<ToolDefinition<unknown>> = [
   wsRawTool,

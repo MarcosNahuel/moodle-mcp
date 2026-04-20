@@ -4,7 +4,7 @@ import {
   toErrorResponse,
   type ToolDefinition,
   type ToolResponse,
-} from './types.js';
+} from '../types.js';
 import {
   publicarFichaClaseTool,
   type PublicarFichaClaseInput,

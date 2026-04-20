@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { join } from 'node:path';
-import { publicarFichaClaseTool } from '../../src/tools/publicar_ficha_clase.js';
-import { publicarPreviewTool } from '../../src/tools/publicar_preview.js';
-import { confirmarPreviewTool } from '../../src/tools/confirmar_preview.js';
-import { obtenerContextoCursoTool } from '../../src/tools/obtener_contexto_curso.js';
+import { publicarFichaClaseTool } from '../../src/tools/contenido/publicar_ficha_clase.js';
+import { publicarPreviewTool } from '../../src/tools/contenido/publicar_preview.js';
+import { confirmarPreviewTool } from '../../src/tools/contenido/confirmar_preview.js';
+import { obtenerContextoCursoTool } from '../../src/tools/curso/obtener_contexto_curso.js';
 import { nullLogger } from '../../src/utils/logger.js';
 import type { MoodleClient } from '../../src/client/moodle-client.js';
 import {
