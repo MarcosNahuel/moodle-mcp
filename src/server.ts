@@ -41,6 +41,12 @@ import { darBajaTool } from './tools/alumnos/dar_baja.js';
 import { crearGrupoTool, asignarAGrupoTool } from './tools/alumnos/grupos.js';
 import { cambiarRolTool } from './tools/alumnos/cambiar_rol.js';
 import { resetPasswordTool } from './tools/alumnos/reset_password.js';
+// v0.5 Phase 7 — Gradebook family
+import { obtenerCalificacionesTool } from './tools/gradebook/obtener_calificaciones.js';
+import { obtenerCompletionTool } from './tools/gradebook/obtener_completion.js';
+import { obtenerIntentosQuizTool } from './tools/gradebook/obtener_intentos_quiz.js';
+import { obtenerEntregasAssignTool } from './tools/gradebook/obtener_entregas_assign.js';
+import { calificarManualmenteTool } from './tools/gradebook/calificar_manualmente.js';
 
 export const ALL_TOOLS: ReadonlyArray<ToolDefinition<unknown>> = [
   wsRawTool,
@@ -73,6 +79,12 @@ export const ALL_TOOLS: ReadonlyArray<ToolDefinition<unknown>> = [
   asignarAGrupoTool,
   cambiarRolTool,
   resetPasswordTool,
+  // Gradebook
+  obtenerCalificacionesTool,
+  obtenerCompletionTool,
+  obtenerIntentosQuizTool,
+  obtenerEntregasAssignTool,
+  calificarManualmenteTool,
 ] as unknown as ReadonlyArray<ToolDefinition<unknown>>;
 
 export interface BuildServerOptions {
