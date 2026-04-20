@@ -23,6 +23,7 @@ import {
   ocultarSeccionTool,
   liberarSeccionTool,
 } from './tools/secciones/visibility.js';
+import { reordenarSeccionesTool } from './tools/secciones/reordenar_secciones.js';
 
 export const ALL_TOOLS: ReadonlyArray<ToolDefinition<unknown>> = [
   wsRawTool,
@@ -36,6 +37,7 @@ export const ALL_TOOLS: ReadonlyArray<ToolDefinition<unknown>> = [
   actualizarSeccionTool,
   ocultarSeccionTool,
   liberarSeccionTool,
+  reordenarSeccionesTool,
 ] as unknown as ReadonlyArray<ToolDefinition<unknown>>;
 
 export interface BuildServerOptions {
