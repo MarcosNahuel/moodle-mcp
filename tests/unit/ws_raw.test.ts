@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { wsRawTool } from '../../src/tools/ws_raw.js';
+import { wsRawTool } from '../../src/tools/primitive/ws_raw.js';
 import {
   MoodleTokenError,
   MoodleWsError,

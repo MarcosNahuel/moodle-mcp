@@ -74,4 +74,20 @@ $functions = [
         'capabilities' => 'moodle/course:manageactivities',
         'ajax'         => true,
     ],
+    'local_italiciamcp_upsert_url' => [
+        'classname'    => 'local_italiciamcp\\external\\upsert_url',
+        'methodname'   => 'execute',
+        'description'  => 'Create or update a mod_url in a course section, keyed by a stable idnumber',
+        'type'         => 'write',
+        'capabilities' => 'moodle/course:manageactivities',
+        'ajax'         => true,
+    ],
+    'local_italiciamcp_upsert_assignment' => [
+        'classname'    => 'local_italiciamcp\\external\\upsert_assignment',
+        'methodname'   => 'execute',
+        'description'  => 'Create or update a mod_assign in a course section, keyed by a stable idnumber',
+        'type'         => 'write',
+        'capabilities' => 'moodle/course:manageactivities',
+        'ajax'         => true,
+    ],
 ];

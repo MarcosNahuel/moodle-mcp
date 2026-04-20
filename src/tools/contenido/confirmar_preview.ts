@@ -3,7 +3,7 @@ import {
   toErrorResponse,
   toJsonResponse,
   type ToolDefinition,
-} from './types.js';
+} from '../types.js';
 
 const InputSchema = z
   .object({

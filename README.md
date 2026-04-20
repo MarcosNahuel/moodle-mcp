@@ -6,27 +6,54 @@
 [![npm](https://img.shields.io/npm/v/@nahuelalbornoz/moodle-mcp.svg)](https://www.npmjs.com/package/@nahuelalbornoz/moodle-mcp)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
-**Status:** v0.1 MVP.
+**Status:** v0.5.0 — operate Moodle at ~80% from an LLM agent.
 
 ---
 
 ## What it is
 
-`moodle-mcp` is a stdio-based MCP server that exposes a small set of high-level **facades** plus one low-level `ws_raw` primitive to publish a canonical pedagogical "Ficha" (a markdown file with YAML frontmatter) into a Moodle course as real sections, pages, resources and activities. Every write is upsert-by-`idnumber`, so republishing the same Ficha never creates duplicates.
+`moodle-mcp` is a stdio-based MCP server that exposes **40 high-level facades** plus one low-level `ws_raw` escape hatch to run almost the entire teaching workflow of a Moodle course from an AI agent: courses, sections, content (pages, urls, assignments, forums, videos), quizzes (with GIFT import), students (enrolment CSV, groups, roles, passwords), gradebook, messaging, calendar, and badges. Every write is upsert-by-`idnumber`, so republishing the same Ficha never creates duplicates.
 
 Primary consumer: Claude Desktop driving the [Italicia](https://italicia.com) language-teaching workflow. But it is a generic open-source adapter — any MCP-capable agent + any Moodle 4.x/5.x instance with Web Services enabled can use it.
 
-## Tools exposed in v0.1
+> **Plugin companion required for full feature set.** Upsert of `page`, `url`, `assign`, `quiz`, file uploads and GIFT imports go through the small PHP plugin `local_italiciamcp` that ships alongside this repo in `plugin-companion/`. Install it once (as "Complemento local" in the Moodle admin UI) and expose its functions to the external service the token belongs to. Without the plugin, the read-only facades (list students, grades, calendar, site info) and `ws_raw` still work.
 
-| Tool | Purpose |
-|---|---|
-| `obtener_contexto_curso` | Snapshot of a course: metadata, sections, recent MCP-published lessons, enrolment counts. |
-| `publicar_ficha_clase` | Publish a FichaClase (absolute markdown path) as a Moodle section + module updates. |
-| `publicar_preview` | Same as above but forced hidden + returns a preview URL. |
-| `confirmar_preview` | Make a previously hidden section and its modules visible to students. |
-| `ws_raw` | Escape hatch: call any Moodle WS function directly. |
+## Tool catalog (v0.5.0 — 40 tools + `ws_raw`)
 
-Not in v0.1 (planned for v0.2+): `publicar_ficha_examen`, `sync_alumnos_csv`, HTTP/SSE transport, GIFT builder, multipart asset upload, automatic module creation.
+Grouped by domain family. Each family lives under `src/tools/<family>/`.
+
+### Curso
+`crear_curso` · `actualizar_curso` · `duplicar_curso` · `archivar_curso` · `listar_mis_cursos` · `obtener_contexto_curso`
+
+### Secciones
+`crear_seccion` · `actualizar_seccion` · `ocultar_seccion` · `liberar_seccion` · `reordenar_secciones`
+
+### Contenido
+`publicar_ficha_clase` · `publicar_preview` · `confirmar_preview` · `generate_video` (Gemini Veo)
+
+### Evaluación (quizzes)
+`publicar_ficha_examen` (one-shot) · `configurar_quiz` · `importar_gift`
+
+### Alumnos
+`listar_alumnos` · `matricular_csv` · `dar_baja` · `crear_grupo` · `asignar_a_grupo` · `cambiar_rol` · `reset_password`
+
+### Gradebook
+`obtener_calificaciones` · `obtener_completion` · `obtener_intentos_quiz` · `obtener_entregas_assign` · `calificar_manualmente`
+
+### Comunicación
+`enviar_mensaje_moodle` · `crear_anuncio_foro` · `obtener_logs_curso` · `obtener_info_sitio`
+
+### Calendario
+`crear_evento_calendario` · `listar_eventos_calendario` · `actualizar_evento` · `eliminar_evento`
+
+### Badges (read-only)
+`listar_badges_usuario`
+
+### Primitive
+`ws_raw` — call any Moodle WS function directly when no facade covers the case.
+
+### Deferred to v0.6 (require new plugin endpoints)
+`duplicar_seccion`, `crear_banco_preguntas`, `editar_preguntas_banco`, `liberar_quiz`, `ocultar_quiz`, `otorgar_badge`.
 
 ## Installation
 

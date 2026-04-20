@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import matter from 'gray-matter';
 import { FichaClaseSchema } from '../../src/schemas/ficha-clase.js';
-import { extractComponentBodies } from '../../src/tools/publicar_ficha_clase.js';
+import { extractComponentBodies } from '../../src/tools/contenido/publicar_ficha_clase.js';
 import { planFichaClase } from '../../src/adapters/ficha-to-moodle.js';
 
 const fixturePath = join(

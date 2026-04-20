@@ -4,7 +4,7 @@ import {
   toErrorResponse,
   toJsonResponse,
   type ToolDefinition,
-} from './types.js';
+} from '../types.js';
 
 const GenerateVideoInputSchema = z
   .object({

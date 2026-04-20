@@ -3,15 +3,15 @@ import {
   toErrorResponse,
   toJsonResponse,
   type ToolDefinition,
-} from './types.js';
+} from '../types.js';
 import {
   CoursesByFieldResponseSchema,
   CourseContentsResponseSchema,
   EnrolledUsersResponseSchema,
   TEACHER_ROLE_SHORTNAMES,
-} from '../schemas/moodle-responses.js';
-import { isMcpIdnumber } from '../utils/idempotency.js';
-import { MoodleWsError } from '../client/errors.js';
+} from '../../schemas/moodle-responses.js';
+import { isMcpIdnumber } from '../../utils/idempotency.js';
+import { MoodleWsError } from '../../client/errors.js';
 
 const InputSchema = z
   .object({
