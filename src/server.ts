@@ -16,6 +16,13 @@ import { publicarFichaClaseTool } from './tools/contenido/publicar_ficha_clase.j
 import { publicarPreviewTool } from './tools/contenido/publicar_preview.js';
 import { confirmarPreviewTool } from './tools/contenido/confirmar_preview.js';
 import { generateVideoTool } from './tools/contenido/generate_video.js';
+// v0.5 Phase 3 — Secciones family
+import { crearSeccionTool } from './tools/secciones/crear_seccion.js';
+import { actualizarSeccionTool } from './tools/secciones/actualizar_seccion.js';
+import {
+  ocultarSeccionTool,
+  liberarSeccionTool,
+} from './tools/secciones/visibility.js';
 
 export const ALL_TOOLS: ReadonlyArray<ToolDefinition<unknown>> = [
   wsRawTool,
@@ -24,6 +31,11 @@ export const ALL_TOOLS: ReadonlyArray<ToolDefinition<unknown>> = [
   publicarPreviewTool,
   confirmarPreviewTool,
   generateVideoTool,
+  // Secciones
+  crearSeccionTool,
+  actualizarSeccionTool,
+  ocultarSeccionTool,
+  liberarSeccionTool,
 ] as unknown as ReadonlyArray<ToolDefinition<unknown>>;
 
 export interface BuildServerOptions {
