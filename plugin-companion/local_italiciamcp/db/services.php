@@ -90,4 +90,20 @@ $functions = [
         'capabilities' => 'moodle/course:manageactivities',
         'ajax'         => true,
     ],
+    'local_italiciamcp_promote_all_drafts_in_course' => [
+        'classname'    => 'local_italiciamcp\\external\\promote_all_drafts_in_course',
+        'methodname'   => 'execute',
+        'description'  => 'Promote every question_versions.status=draft to ready across all quizzes in a course (fixes the silent-edit bug in Moodle 4.5+/5.x)',
+        'type'         => 'write',
+        'capabilities' => 'moodle/course:manageactivities',
+        'ajax'         => true,
+    ],
+    'local_italiciamcp_update_question_simple' => [
+        'classname'    => 'local_italiciamcp\\external\\update_question_simple',
+        'methodname'   => 'execute',
+        'description'  => 'Direct DB update of question name / questiontext / answers, bypassing the Moodle edit form that fails silently in Moodle 5.0.2 qbank',
+        'type'         => 'write',
+        'capabilities' => 'moodle/course:manageactivities',
+        'ajax'         => true,
+    ],
 ];
