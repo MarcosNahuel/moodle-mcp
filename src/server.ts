@@ -33,6 +33,7 @@ import { listarMisCursosTool } from './tools/curso/listar_mis_cursos.js';
 // v0.5 Phase 5 — Evaluacion family (partial — 3 of 7; rest deferred v0.6)
 import { configurarQuizTool } from './tools/evaluacion/configurar_quiz.js';
 import { importarGiftTool } from './tools/evaluacion/importar_gift.js';
+import { modificarPreguntaTool } from './tools/evaluacion/modificar_pregunta.js';
 import { publicarFichaExamenTool } from './tools/evaluacion/publicar_ficha_examen.js';
 // v0.5 Phase 6 — Alumnos family
 import { listarAlumnosTool } from './tools/alumnos/listar_alumnos.js';
@@ -82,6 +83,7 @@ export const ALL_TOOLS: ReadonlyArray<ToolDefinition<unknown>> = [
   // Evaluacion
   configurarQuizTool,
   importarGiftTool,
+  modificarPreguntaTool,
   publicarFichaExamenTool,
   // Alumnos
   listarAlumnosTool,
