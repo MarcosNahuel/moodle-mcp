@@ -18,29 +18,30 @@ use context_course;
  * post-mortem).
  *
  * What this does:
+ *  - Resolves the actual question row being served to students via the
+ *    question_versions chain (Moodle 5.x: quiz renders latest-ready version,
+ *    NOT necessarily the passed question_id which may be a draft/old version).
  *  - Updates `question.name`, `question.questiontext`, `question.timemodified`
- *    for the given question_id (NOT a new version — modifies in place).
+ *    on the RESOLVED row.
  *  - Optionally updates `question_answers` (match by position/index).
- *  - Purges the quiz caches so the running attempts see the new text.
+ *  - Marks the resolved version as status='ready' so it is visible.
+ *  - Updates question_bank_entries.timemodified to bust upstream caches.
+ *  - Purges the quiz caches so running attempts see the new text.
  *
  * What this does NOT do:
- *  - Create a new question_version. The edit is in-place on the current
- *    row. This is by design: for production use after this endpoint
- *    ships, prefer `add_questions_gift` + delete for structural changes.
- *    This endpoint is for typo fixes / feedback tweaks.
- *  - Validate that the user owns the question (beyond the course
- *    capability check). The caller is trusted (bot with manager role).
+ *  - Create a new question_version. The edit is applied to the current
+ *    ready version row. For structural rewrites prefer `add_questions_gift`.
+ *  - Validate question ownership beyond the course capability check.
  *
- * Scope: the caller must pass `courseid` so we can do a capability
- * check in that course's context. The question can belong to any
- * category inside the course's quiz banks.
+ * Scope: the caller must pass `courseid` for capability check. The question
+ * can belong to any category inside the course's quiz banks.
  */
 class update_question_simple extends external_api {
 
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
             'courseid'     => new external_value(PARAM_INT,  'Course id for capability check'),
-            'question_id'  => new external_value(PARAM_INT,  'question.id to update'),
+            'question_id'  => new external_value(PARAM_INT,  'question.id to update (will be resolved to the latest-ready version)'),
             'name'         => new external_value(PARAM_TEXT, 'New question name (optional; pass "" to skip)', VALUE_DEFAULT, ''),
             'questiontext' => new external_value(PARAM_RAW,  'New question text in HTML (optional; pass "" to skip)', VALUE_DEFAULT, ''),
             'answers'      => new external_multiple_structure(
@@ -66,23 +67,51 @@ class update_question_simple extends external_api {
         global $DB;
 
         $params = self::validate_parameters(self::execute_parameters(), [
-            'courseid' => $courseid,
-            'question_id' => $question_id,
-            'name' => $name,
+            'courseid'     => $courseid,
+            'question_id'  => $question_id,
+            'name'         => $name,
             'questiontext' => $questiontext,
-            'answers' => $answers,
+            'answers'      => $answers,
         ]);
 
-        $course = $DB->get_record('course', ['id' => $params['courseid']], '*', MUST_EXIST);
+        $course  = $DB->get_record('course', ['id' => $params['courseid']], '*', MUST_EXIST);
         $context = context_course::instance($course->id);
         self::validate_context($context);
         require_capability('moodle/course:manageactivities', $context);
 
-        $question = $DB->get_record('question', ['id' => $params['question_id']], '*', MUST_EXIST);
+        // ── Resolve the question row actually being served to students ────────
+        // Moodle 5.x quiz rendering chain:
+        //   quiz_slots → question_references → question_versions (latest ready)
+        //   → question row
+        // The passed question_id may be a draft or an older version while the
+        // quiz displays a DIFFERENT question.id. We resolve to the latest-ready
+        // version of the same question_bank_entry before writing anything.
+        $version_row = $DB->get_record('question_versions', ['questionid' => $params['question_id']]);
+        $target_id   = $params['question_id'];  // fallback: edit as requested
 
-        $changes = [];
+        if ($version_row) {
+            $entry_id     = $version_row->questionbankentryid;
+            $latest_ready = $DB->get_record_sql(
+                "SELECT * FROM {question_versions}
+                  WHERE questionbankentryid = :eid
+                    AND status = 'ready'
+                  ORDER BY version DESC
+                  LIMIT 1",
+                ['eid' => $entry_id]
+            );
+            if ($latest_ready) {
+                $target_id = $latest_ready->questionid;
+            } else {
+                // No ready version exists — promote ours so the quiz can see it.
+                $DB->set_field('question_versions', 'status', 'ready',
+                    ['questionid' => $params['question_id']]);
+            }
+        }
 
-        // 1. Update question row in place.
+        $question = $DB->get_record('question', ['id' => $target_id], '*', MUST_EXIST);
+        $changes  = [];
+
+        // 1. Update the resolved question row.
         $update = ['id' => $question->id, 'timemodified' => time()];
         if ($params['name'] !== '') {
             $update['name'] = $params['name'];
@@ -93,11 +122,11 @@ class update_question_simple extends external_api {
             $update['questiontextformat'] = FORMAT_HTML;
             $changes[] = 'questiontext';
         }
-        if (count($update) > 2) { // more than just id + timemodified
+        if (count($update) > 2) {
             $DB->update_record('question', (object)$update);
         }
 
-        // 2. Optional answers update.
+        // 2. Optional answers update (on the resolved question row).
         $answerChanges = [];
         if (!empty($params['answers'])) {
             $answerRows = $DB->get_records('question_answers', ['question' => $question->id], 'id ASC');
@@ -108,7 +137,7 @@ class update_question_simple extends external_api {
                     continue;
                 }
                 $row = $answerRows[$idx];
-                $up = ['id' => $row->id];
+                $up  = ['id' => $row->id];
                 if ($a['answer'] !== '') {
                     $up['answer'] = $a['answer'];
                     $up['answerformat'] = FORMAT_HTML;
@@ -122,12 +151,28 @@ class update_question_simple extends external_api {
                 }
                 if (count($up) > 1) {
                     $DB->update_record('question_answers', (object)$up);
-                    $answerChanges[] = ['index' => $idx, 'answer_id' => (int)$row->id, 'fields' => array_diff(array_keys($up), ['id'])];
+                    $answerChanges[] = [
+                        'index'     => $idx,
+                        'answer_id' => (int)$row->id,
+                        'fields'    => array_values(array_diff(array_keys($up), ['id'])),
+                    ];
                 }
             }
         }
 
-        // 3. Purge caches so in-flight quiz attempts pick up the new content.
+        // 3. Mark the resolved version as 'ready' and bust the entry cache.
+        //    This ensures the quiz serves the row we just edited even if Moodle
+        //    had downgraded it to draft during a previous failed edit attempt.
+        if ($version_row) {
+            $DB->set_field('question_versions', 'status', 'ready', [
+                'questionbankentryid' => $version_row->questionbankentryid,
+                'questionid'          => $target_id,
+            ]);
+            $DB->set_field('question_bank_entries', 'timemodified', time(),
+                ['id' => $version_row->questionbankentryid]);
+        }
+
+        // 4. Purge question caches so in-flight quiz attempts pick up the change.
         if (class_exists('\\core\\cache_helper')) {
             \core\cache_helper::purge_by_event('changesinquestions');
         } else if (class_exists('\\cache_helper')) {
@@ -135,25 +180,25 @@ class update_question_simple extends external_api {
         }
 
         return [
-            'question_id' => (int)$question->id,
-            'name' => $params['name'] !== '' ? $params['name'] : $question->name,
+            'question_id'             => (int)$question->id,
+            'name'                    => $params['name'] !== '' ? $params['name'] : $question->name,
             'question_fields_changed' => $changes,
-            'answers_updated' => $answerChanges,
+            'answers_updated'         => $answerChanges,
         ];
     }
 
     public static function execute_returns(): external_single_structure {
         return new external_single_structure([
-            'question_id' => new external_value(PARAM_INT, 'question.id'),
+            'question_id' => new external_value(PARAM_INT, 'question.id of the row that was actually updated (may differ from the requested id if a newer version existed)'),
             'name' => new external_value(PARAM_TEXT, 'Current question name after update'),
             'question_fields_changed' => new external_multiple_structure(
                 new external_value(PARAM_TEXT, 'Field name that was updated')
             ),
             'answers_updated' => new external_multiple_structure(
                 new external_single_structure([
-                    'index' => new external_value(PARAM_INT, '0-based index'),
+                    'index'     => new external_value(PARAM_INT, '0-based index'),
                     'answer_id' => new external_value(PARAM_INT, 'question_answers.id'),
-                    'fields' => new external_multiple_structure(
+                    'fields'    => new external_multiple_structure(
                         new external_value(PARAM_TEXT, 'Field name')
                     ),
                 ])
