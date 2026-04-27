@@ -160,16 +160,14 @@ class update_question_simple extends external_api {
             }
         }
 
-        // 3. Mark the resolved version as 'ready' and bust the entry cache.
-        //    This ensures the quiz serves the row we just edited even if Moodle
-        //    had downgraded it to draft during a previous failed edit attempt.
+        // 3. Ensure the resolved version is 'ready' so the quiz can serve it.
+        //    NOTE: question_bank_entries has no timemodified column in Moodle 5.x
+        //    — only touch question_versions.
         if ($version_row) {
             $DB->set_field('question_versions', 'status', 'ready', [
                 'questionbankentryid' => $version_row->questionbankentryid,
                 'questionid'          => $target_id,
             ]);
-            $DB->set_field('question_bank_entries', 'timemodified', time(),
-                ['id' => $version_row->questionbankentryid]);
         }
 
         // 4. Purge question caches so in-flight quiz attempts pick up the change.
