@@ -87,6 +87,11 @@ function local_italiciamcp_before_standard_top_of_body_html() {
       if (window._italiciamcp_saving) return;
       ev.preventDefault();
       ev.stopPropagation();
+      // Sync TinyMCE iframes → hidden textareas before reading values.
+      // stopPropagation blocks TinyMCE's own submit handler (bubble phase).
+      if (typeof tinymce !== 'undefined') {
+        try { tinymce.triggerSave(); } catch(e) {}
+      }
       window._italiciamcp_saving = true;
       var qid = qidInput.value;
       var name = (form.querySelector('[name="name"]')||{}).value || '';
