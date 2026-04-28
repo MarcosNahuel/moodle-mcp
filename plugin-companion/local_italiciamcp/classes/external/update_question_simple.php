@@ -40,7 +40,8 @@ class update_question_simple extends external_api {
 
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
-            'courseid'     => new external_value(PARAM_INT,  'Course id for capability check'),
+            'courseid'     => new external_value(PARAM_INT,  'Course id for capability check (pass 0 if using cmid)', VALUE_DEFAULT, 0),
+            'cmid'         => new external_value(PARAM_INT,  'Course module id as alternative to courseid (e.g. from quiz context URL)', VALUE_DEFAULT, 0),
             'question_id'  => new external_value(PARAM_INT,  'question.id to update (will be resolved to the latest-ready version)'),
             'name'         => new external_value(PARAM_TEXT, 'New question name (optional; pass "" to skip)', VALUE_DEFAULT, ''),
             'questiontext' => new external_value(PARAM_RAW,  'New question text in HTML (optional; pass "" to skip)', VALUE_DEFAULT, ''),
@@ -58,8 +59,9 @@ class update_question_simple extends external_api {
     }
 
     public static function execute(
-        int $courseid,
-        int $question_id,
+        int $courseid = 0,
+        int $cmid = 0,
+        int $question_id = 0,
         string $name = '',
         string $questiontext = '',
         array $answers = []
@@ -68,11 +70,18 @@ class update_question_simple extends external_api {
 
         $params = self::validate_parameters(self::execute_parameters(), [
             'courseid'     => $courseid,
+            'cmid'         => $cmid,
             'question_id'  => $question_id,
             'name'         => $name,
             'questiontext' => $questiontext,
             'answers'      => $answers,
         ]);
+
+        // Resolve courseid from cmid if courseid not provided (quiz-context URL uses cmid).
+        if (!$params['courseid'] && $params['cmid']) {
+            $cm = get_coursemodule_from_id(null, $params['cmid'], 0, false, MUST_EXIST);
+            $params['courseid'] = $cm->course;
+        }
 
         $course  = $DB->get_record('course', ['id' => $params['courseid']], '*', MUST_EXIST);
         $context = context_course::instance($course->id);

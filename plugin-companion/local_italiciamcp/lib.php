@@ -78,9 +78,14 @@ function local_italiciamcp_before_standard_top_of_body_html() {
     if (!form) return;
     var qidInput = form.querySelector('input[name="id"]');
     if (!qidInput || !qidInput.value) return;
-    var courseid = new URLSearchParams(location.search).get('courseid')
-                || (form.querySelector('input[name="courseid"]')||{}).value;
-    if (!courseid) return;
+    var qs = new URLSearchParams(location.search);
+    var courseid = qs.get('courseid')
+                || (form.querySelector('input[name="courseid"]')||{}).value
+                || '';
+    var cmid = qs.get('cmid')
+            || (form.querySelector('input[name="cmid"]')||{}).value
+            || '';
+    if (!courseid && !cmid) return;
     form.addEventListener('submit', function(ev){
       var submitter = ev.submitter || {};
       if (/(cancel|back|continue|default)/i.test(submitter.name || '')) return;
@@ -112,8 +117,8 @@ function local_italiciamcp_before_standard_top_of_body_html() {
         i++;
       }
       var payload = [{index:0, methodname:'local_italiciamcp_update_question_simple',
-        args:{courseid:parseInt(courseid), question_id:parseInt(qid),
-              name:name, questiontext:qtext, answers:answers}}];
+        args:{courseid:parseInt(courseid)||0, cmid:parseInt(cmid)||0,
+              question_id:parseInt(qid), name:name, questiontext:qtext, answers:answers}}];
       fetch('/lib/ajax/service.php?sesskey={$sesskey}&info=local_italiciamcp_update_question_simple', {
         method:'POST', headers:{'Content-Type':'application/json'},
         credentials:'same-origin', body: JSON.stringify(payload)
