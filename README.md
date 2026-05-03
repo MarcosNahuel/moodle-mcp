@@ -6,7 +6,7 @@
 [![npm](https://img.shields.io/npm/v/@nahuelalbornoz/moodle-mcp.svg)](https://www.npmjs.com/package/@nahuelalbornoz/moodle-mcp)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
-**Status:** v0.5.0 — operate Moodle at ~80% from an LLM agent.
+**Status:** wrapper **v0.5.2** + plugin **v0.5.0** — operate Moodle at ~80% from an LLM agent. (v0.5.0 release adds `add_questions_gift` contract fix; see CHANGELOG.)
 
 ---
 
@@ -18,7 +18,7 @@ Primary consumer: Claude Desktop driving the [Italicia](https://italicia.com) la
 
 > **Plugin companion required for full feature set.** Upsert of `page`, `url`, `assign`, `quiz`, file uploads and GIFT imports go through the small PHP plugin `local_italiciamcp` that ships alongside this repo in `plugin-companion/`. Install it once (as "Complemento local" in the Moodle admin UI) and expose its functions to the external service the token belongs to. Without the plugin, the read-only facades (list students, grades, calendar, site info) and `ws_raw` still work.
 
-## Tool catalog (v0.5.0 — 40 tools + `ws_raw`)
+## Tool catalog (40 tools + `ws_raw`)
 
 Grouped by domain family. Each family lives under `src/tools/<family>/`.
 
