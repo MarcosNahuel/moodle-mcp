@@ -34,7 +34,11 @@ class add_questions_gift extends external_api {
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
             'courseid'       => new external_value(PARAM_INT,  'Course ID'),
-            'quizidnumber'   => new external_value(PARAM_TEXT, 'idnumber of the quiz course_module (empty if using cmid)',
+            // Nombre canónico (lo que envía el wrapper TS).
+            'quiz_idnumber'  => new external_value(PARAM_TEXT, 'idnumber of the quiz course_module',
+                                                   VALUE_DEFAULT, ''),
+            // Alias DEPRECATED para compat con scripts viejos.
+            'quizidnumber'   => new external_value(PARAM_TEXT, 'DEPRECATED alias of quiz_idnumber',
                                                    VALUE_DEFAULT, ''),
             'cmid'           => new external_value(PARAM_INT,  'course_modules.id of the quiz (alternative to idnumber)',
                                                    VALUE_DEFAULT, 0),
@@ -42,6 +46,9 @@ class add_questions_gift extends external_api {
             'category_name'  => new external_value(PARAM_TEXT, 'Question bank category name (created if missing)',
                                                    VALUE_DEFAULT, 'MCP Import'),
             'default_mark'   => new external_value(PARAM_FLOAT, 'Default mark per question', VALUE_DEFAULT, 1.0),
+            // NUEVO en v0.5.0: si append=0, crear preguntas en bank pero NO attachear al quiz.
+            'append'         => new external_value(PARAM_INT,  'If 1 (default) append to quiz slots, if 0 only create in bank',
+                                                   VALUE_DEFAULT, 1),
         ]);
     }
 
@@ -50,21 +57,25 @@ class add_questions_gift extends external_api {
      */
     public static function execute(
         int $courseid,
+        string $quiz_idnumber = '',
         string $quizidnumber = '',
         int $cmid = 0,
         string $gift = '',
         string $category_name = 'MCP Import',
-        float $default_mark = 1.0
+        float $default_mark = 1.0,
+        int $append = 1
     ): array {
         global $DB, $USER;
 
         $params = self::validate_parameters(self::execute_parameters(), [
             'courseid'      => $courseid,
+            'quiz_idnumber' => $quiz_idnumber,
             'quizidnumber'  => $quizidnumber,
             'cmid'          => $cmid,
             'gift'          => $gift,
             'category_name' => $category_name,
             'default_mark'  => $default_mark,
+            'append'        => $append,
         ]);
 
         $course = $DB->get_record('course', ['id' => $params['courseid']], '*', MUST_EXIST);
@@ -73,9 +84,14 @@ class add_questions_gift extends external_api {
         require_capability('moodle/course:manageactivities', $context);
         require_capability('moodle/question:add', $context);
 
-        if (trim($params['quizidnumber']) === '' && (int)$params['cmid'] <= 0) {
+        // Resolver el idnumber: prioridad a quiz_idnumber, fallback a quizidnumber.
+        $resolvedidnumber = trim($params['quiz_idnumber']) !== ''
+                            ? $params['quiz_idnumber']
+                            : $params['quizidnumber'];
+
+        if ($resolvedidnumber === '' && (int)$params['cmid'] <= 0) {
             throw new \moodle_exception('identifierrequired', 'local_italiciamcp', '', null,
-                'Either quizidnumber or cmid is required');
+                'Either quiz_idnumber, quizidnumber or cmid is required');
         }
         if (trim($params['gift']) === '') {
             throw new \moodle_exception('giftempty', 'local_italiciamcp', '', null,
@@ -91,7 +107,7 @@ class add_questions_gift extends external_api {
         } else {
             $cm = $DB->get_record('course_modules', [
                 'course'   => $course->id,
-                'idnumber' => $params['quizidnumber'],
+                'idnumber' => $resolvedidnumber,
             ], '*', MUST_EXIST);
         }
         $quiz = $DB->get_record('quiz', ['id' => $cm->instance], '*', MUST_EXIST);
@@ -209,44 +225,54 @@ class add_questions_gift extends external_api {
             );
         }
 
-        // Attach each VERIFIED question to the quiz as a new slot.
-        // quiz_add_quiz_question in Moodle 5.x creates the question_references row.
-        foreach ($verified as $qid) {
-            quiz_add_quiz_question((int)$qid, $quiz, 0, (float)$params['default_mark']);
+        // Attach each VERIFIED question to the quiz as a new slot, SOLO si append=1.
+        $appendedcount = 0;
+        if ((int)$params['append'] === 1) {
+            foreach ($verified as $qid) {
+                quiz_add_quiz_question((int)$qid, $quiz, 0, (float)$params['default_mark']);
+                $appendedcount++;
+            }
         }
 
         // Post-verify: every new quiz_slot row must have a question_references row.
-        $slotsorphans = $DB->get_records_sql(
-            "SELECT qs.id, qs.slot
-               FROM {quiz_slots} qs
-          LEFT JOIN {question_references} qr
-                 ON qr.itemid = qs.id
-                AND qr.component = 'mod_quiz'
-                AND qr.questionarea = 'slot'
-              WHERE qs.quizid = :quizid
-                AND qr.id IS NULL",
-            ['quizid' => (int)$quiz->id]
-        );
-        if (!empty($slotsorphans)) {
-            throw new \moodle_exception(
-                'slotsorphansdetected',
-                'local_italiciamcp', '', null,
-                "After quiz_add_quiz_question, " . count($slotsorphans)
-                . " slots in quiz {$quiz->id} have no question_references. "
-                . "Attempts will fail. Slot ids: " . implode(',', array_column($slotsorphans, 'id'))
+        // Solo relevante cuando se añadieron slots (append=1).
+        if ((int)$params['append'] === 1) {
+            $slotsorphans = $DB->get_records_sql(
+                "SELECT qs.id, qs.slot
+                   FROM {quiz_slots} qs
+              LEFT JOIN {question_references} qr
+                     ON qr.itemid = qs.id
+                    AND qr.component = 'mod_quiz'
+                    AND qr.questionarea = 'slot'
+                  WHERE qs.quizid = :quizid
+                    AND qr.id IS NULL",
+                ['quizid' => (int)$quiz->id]
             );
-        }
+            if (!empty($slotsorphans)) {
+                throw new \moodle_exception(
+                    'slotsorphansdetected',
+                    'local_italiciamcp', '', null,
+                    "After quiz_add_quiz_question, " . count($slotsorphans)
+                    . " slots in quiz {$quiz->id} have no question_references. "
+                    . "Attempts will fail. Slot ids: " . implode(',', array_column($slotsorphans, 'id'))
+                );
+            }
 
-        // Recompute sumgrades so grade display is correct.
-        quiz_update_sumgrades($quiz);
+            // Recompute sumgrades so grade display is correct.
+            quiz_update_sumgrades($quiz);
+        }
 
         rebuild_course_cache((int)$course->id, true);
 
         return [
-            'action'      => 'imported',
+            'action'      => ((int)$params['append'] === 1) ? 'imported' : 'banked',
             'cmid'        => (int)$cm->id,
             'quizid'      => (int)$quiz->id,
             'imported'    => count($verified),
+            'created'     => count($verified),       // alias para wrapper
+            'existing'    => 0,                       // reservado para dedupe futuro
+            'appended'    => $appendedcount,
+            'category_id' => (int)$category->id,
             'questionids' => $verified,
             'url'         => (new moodle_url('/mod/quiz/edit.php', ['cmid' => $cm->id]))->out(false),
         ];
@@ -290,10 +316,14 @@ class add_questions_gift extends external_api {
 
     public static function execute_returns(): external_single_structure {
         return new external_single_structure([
-            'action'      => new external_value(PARAM_ALPHA, 'imported'),
+            'action'      => new external_value(PARAM_ALPHA, 'imported|banked'),
             'cmid'        => new external_value(PARAM_INT,   'course_modules.id of the quiz'),
             'quizid'      => new external_value(PARAM_INT,   'quiz.id'),
             'imported'    => new external_value(PARAM_INT,   'number of questions imported'),
+            'created'     => new external_value(PARAM_INT,   'alias of imported, kept for wrapper compat'),
+            'existing'    => new external_value(PARAM_INT,   'questions skipped because already existed (always 0 in v0.5.0; reserved)'),
+            'appended'    => new external_value(PARAM_INT,   'questions actually attached to the quiz (0 if append=0)'),
+            'category_id' => new external_value(PARAM_INT,   'id of the bank category used'),
             'questionids' => new external_multiple_structure(
                 new external_value(PARAM_INT, 'question.id'),
                 'Ids of the imported questions'
