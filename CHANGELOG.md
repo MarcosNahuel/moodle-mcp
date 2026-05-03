@@ -1,7 +1,22 @@
 # Changelog
 
-All notable changes to `@nahuelalbornoz/moodle-mcp` are documented here.
+All notable changes to `@nahuelalbornoz/moodle-mcp` (wrapper TS) and `local_italiciamcp` (plugin PHP) are documented here.
 Follows [Keep a Changelog](https://keepachangelog.com/).
+
+## Plugin `local_italiciamcp` v0.5.0 — 2026-05-03
+
+### Fixed
+- **`add_questions_gift`**: contrato roto desde v0.4.x. El wrapper enviaba `quiz_idnumber` y `append`, el plugin esperaba `quizidnumber` y no declaraba `append`. Resultado: 100% de las llamadas fallaban con `invalid_parameter_exception`. Ahora acepta ambos nombres de idnumber y declara `append` con default 1.
+
+### Added
+- **`add_questions_gift`**: nuevo modo `append=0` para crear preguntas en el banco sin attacharlas a un quiz específico (útil para preparar bancos reusables).
+- **`add_questions_gift`**: campos nuevos en el response (`created`, `existing`, `appended`, `category_id`) para que el wrapper TS pueda mapear sin parsear `imported`.
+
+### Migration notes
+- El plugin sigue siendo backwards-compat: scripts viejos que envían `quizidnumber` siguen funcionando.
+- Wrapper `@nahuelalbornoz/moodle-mcp` debe bumpearse a v0.5.2 también para aprovechar el response nuevo.
+
+---
 
 ## [0.5.0] — 2026-04-20
 
