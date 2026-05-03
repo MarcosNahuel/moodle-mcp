@@ -56,25 +56,41 @@ export const importarGiftTool = buildImportarGiftTool();
 async function execute(args: ImportarGiftInput, ctx: ToolContext): Promise<ToolResponse> {
   try {
     const quiz_idnumber = buildIdnumber('quiz', `${args.course_id}-${args.quiz_slug}`);
-    const result = (await ctx.client.call('local_italiciamcp_add_questions_gift', {
+
+    // Si category_name está vacío, NO enviar el campo — dejamos que el
+    // plugin aplique su propio default 'MCP Import'. Si se envía '',
+    // el plugin lo recibe como string vacío y crearía una categoría sin nombre.
+    const wsParams: Record<string, string | number> = {
       courseid: args.course_id,
       quiz_idnumber,
       gift: args.gift_text,
-      category_name: args.category_name,
       append: args.append ? 1 : 0,
-    })) as {
+    };
+    if (args.category_name && args.category_name.trim() !== '') {
+      wsParams.category_name = args.category_name;
+    }
+
+    const result = (await ctx.client.call('local_italiciamcp_add_questions_gift', wsParams)) as {
+      action: 'imported' | 'banked';
+      cmid: number;
+      quizid: number;
+      imported: number;
       created: number;
       existing: number;
       appended: number;
       category_id: number;
+      questionids: number[];
+      url: string;
     };
 
     return toJsonResponse({
       quiz_idnumber,
+      action: result.action,
       questions_created: result.created,
       questions_existing_reused: result.existing,
       appended_to_quiz: result.appended,
       bank_category_id: result.category_id,
+      edit_url: result.url,
     });
   } catch (e) {
     ctx.logger.warn('importar_gift.failed', {
